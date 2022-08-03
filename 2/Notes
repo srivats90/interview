@@ -1,0 +1,965 @@
+
+https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+
+2 POINTERS work only in Sorter Arrays
+Cyclic sort with swap whenever indices comes into the problem
+Binary means modulo 2 or /2
+Binary search tree means use mid..
+        while(low<=high){
+            int mid = low + (high-low)/2; // to avoid ArrayIndexOutOfBoundException.
+            if(A[mid] == target) return mid;
+            else if(A[mid] > target) high = mid-1;
+            else low = mid+1;
+        }
+        return -1;
+
+        
+Collections :
+
+Using Iterators for iterating over the collections:
+We should use iterators for traversing over the collection elements instead of using a for loop for the same. 
+The reason is that the iterator may throw ConcurrentModificationException 
+if any other thread tries to modify the collection after the iterator has been created. 
+This saves us from bugs.
+Iterators use modCount internally during every iteration to validate this
+
+Limitations of arrays:
+1. arrays are fixed in size
+2. arrays can hold only homogeneous data elements .. else u ve to use Object[] 
+3. ready made APIs not available for arrays.
+
+To see source code of .class files you need to install decompiler in ur IDE.(Eclipse marketplace)
+
+Arrays can stores multiple variables of same type or variables that are subclasses of same type.
+Array can hold primitives or objects but array itself will be an object on the heap.
+
+ArrayList:
+Default size of ArrayList is 10.
+remove() takes in index 
+removeAll() takes in a collection which can be another arraylist n removes them
+clear() removes all elements in the list.\\
+
+ List<String> synchronizedarraylist =
+       Collections.synchronizedList(new ArrayList<String>());
+       
+        synchronized(synchronizedarraylist) {
+       Iterator<String> iterator = synchronizedarraylist.iterator(); 
+       while (iterator.hasNext())
+          System.out.println(iterator.next());
+       }
+       
+       //Enumeration
+            Enumeration enumeration_hash_table = hash_table.elements();//creating an enumeration object
+     
+     //while loop runs until the hashtable has more entries in it
+     while(enumeration_hash_table.hasMoreElements()) {
+        System.out.println(enumeration_hash_table.nextElement());
+     }
+       
+           // using unmodifiableList() method
+           List<String>
+               read_only_list = Collections
+                                   .unmodifiableList(sample_list); 
+                                   
+         //shuffle
+          Collections.shuffle(array_list);//shuffling the arraylist
+                              
+
+LinkedList:
+faster than array list for inserting and removing in middle
+however consumes more memory coz of pointers for doubly ll.
+it has .add , .remove, (.add, .get,with index),  
+(.addFirst, .addLast, .getFirst, .getLast , .removeFirst, .removeLast)  -> part of deque interface
+.contains , .indexOf (returns index of first occurances )
+.lastIndexOf 
+
+HashMap:
+.put , .isEmpty, .size, .containsKey, .containsValue, .get, .remove
+.keySet -> returns Set of keys only as set
+.values() -> returns values only as Collection.
+
+List<Map.Entry<String, Integer>> llist = new LinkedList<>(map.entrySet());
+
+HashMap vs HashTable:
+thread safe.
+HashMap allows one null key and multiple null values whereas Hashtable doesn't allow any null key or value.
+
+Map map= Collections.synchronizedMap(hashmap);
+
+Try to subtract map value frequency while solving comparing strings etc type problems.
+
+Return Value: If an existing key is passed then the previous value gets returned. 
+If a new pair is passed, then NULL is returned.
+
+Encapsulation:
+private, public etc stuff
+
+Abstraction:
+Hiding implementation details to avoid complexity to the users. Tv Remote with more buttons is more confusing.
+Just reveal only necessary details so changes made inner implementation may not require changes outside.
+Using interfaces and abstract classes
+
+Singleton:
+private constructor with public method to instantiate the class if not already (lazy)
+
+Factory:
+Object creation happens in the factory
+
+https://www.interviewbit.com/design-patterns-interview-questions/
+
+Threads:
+extends thread or implements Runnable
+
+extends thread ( @Override run method ) and it start new thread , create object for the thread xtended class and execute obj.start(). obj.run() wont start new thread.
+
+implements Runnable in the caller, create object like Thread mythread = new Thread(Obj of class that implemented Runnable) and then mythread.start() to start new thread.
+
+to create exception for thread, you can try throw new RuntimeException
+
+Volatile keyword prevents threads from caching the variables and always read from right copy.
+
+Synchronized keyword -> intrinsic lock
+
+CountDownLatch ??
+
+Adv of implements Runnable over extend thread is that java can allow to extend only 1 class so if u want to extend anything else, it wont be possible.
+mythread.join stops execution of other part of program till the thread completes its execution. Its kinda a blocking call.
+mythread.isAlive() to check if its alive.
+
+Generics:
+<T>   generics can only extend class and use those class methods, variables
+<T extends Animals & Serializable>  -> work ... class first and then interface with &.. not reverse,
+
+#class with generics
+public class Printer <T extends Animal> {
+}
+#functions with generics
+private static <T> void shout(T whateverToShout){
+}
+private static <T, V> void shout(T whateverToShout, V otherthingToShout){
+}
+private static <T, V> T shout(T whateverToShout, V otherthingToShout){
+return whateverToShout
+
+public class TestClass{
+    public static void main(String args[]) {
+		List<Integer> mylist = new ArrayList<>();	
+		List<Double> mydoublelist = new ArrayList<>();
+    }
+    public static void testfn(List<?> list){   
+    }
+}
+public class TestClass{
+    public static void main(String args[]) {
+		List<Cat> mylist = new ArrayList<>();
+		testfn(mylist);
+		List<Dog> mydoublelist = new ArrayList<>();
+		testfn(mydoublelist);
+    }
+    public static void testfn(List<? extends Animal> list){   
+    }
+}
+
+SUPER:
+use super when u have overridden an implementation and still you want the parent class's implementation.
+use super in ur subclass constructor to set values of inherited variables.. 
+super constructor cannot be used anywhere other than constructor of subclass
+also, constructor call must be the first statement in the constructor.
+if we dont do a constructor call inside the subclass constructor, 
+java by default will call super() with no params as first line in subclass constructor
+
+Constructors cant be static, final, abstract.
+They cannot have return type.
+However, if return type is mentioned means its a badly named normal method.
+
+Reference variables can be static, instance, method parameters or local variables.
+
+Instance variables are defined inside the class but outside any method.
+Can be final, transient.
+Cannot be abstract, synch, strictfp, native
+
+if made static then becomes class variables.
+
+local variables must be initialised before using.. else compile problems.
+local variable n instance variable can have same name.. its called Shadowing
+
+STATIC:
+"this" cannot be used inside static methods.
+the whole point of static method is that they can be used outside the context of any object of that class.
+you can call the static method of class without needing to use an object.
+
+THIS:
+this can be used inside sysout/string and it automatically prints the toString().
+this can also be used to:
+Invoke current class constructor
+Invoke current class method
+Return the current class object
+Pass an argument in the method call
+Pass an argument in the constructor call
+
+Animal(String noise){
+this.noise = noise;
+}
+Animal(){			-> u can call static method
+   this(makeNoise());
+}
+static String makeNoise(){
+
+}
+
+this can be used to call a constructor from other constructor to set values etc.
+public class Dog{
+   String name; int age;
+   
+   public Dog(){
+       this("kk", 30);		// this has to be the very first line.
+   }
+   public Dog(String name, String age){
+   		this.name = name;
+   		this.age = age;
+   }
+}
+
+JUNIT:
+Maven pom.xml la org.jupiter.junit add the dependency.
+then src/test/java... create the junit test class
+import Assertions.
+
+Write a fn inside the class and add @Test
+@Test
+void testfn1(){
+ var obj = new ClassName();
+ assertEquals(4 //expectedresult, obj.addfn(2,2));
+ assertTrue(obj.addfn(2,2) == 4);  //both are same.
+ }
+ 
+assertEquals(), assertNotEquals(), assertTrue(), assertFalse(), assertNull(), assertNotNull()
+assertThrows() -> used for asserting exceptions. 
+assertThrows(IlleagalArgumentException.class, () -> { obj.addfn(null,2) });
+
+
+ABSTRACT:
+you cannot instantiate abstract class to create objects.
+but u can make subclass for abstract class which can be instantiated.. 
+Animal can be abstract.. cat n dog can extend animal and objs can be created.
+
+abstract method does not have a body.. just declare it so that subclass must implement them.
+interface methods are by-default abstract and hence no need to put abstract keyword in interface methods.
+
+diff between abstract class n interface is :
+1. multiple interfaces can be implemented but we can extend only 1 abstract class.
+2. variables/fields declared inside interface is static and final so they must be initialized.
+
+
+DOWNCASTING : instanceof 
+public static void doAnimalStuff(Animal animal){
+	if(animal instanceof Dog){
+		//do ur stuff related to Dog
+		Dog dog = (Dog)animal;
+	}
+}
+
+public static void main()
+public -> because JRE should be able to call it
+
+INNER CLASS or NESTED CLASS:
+
+//if inner is non-static
+public class OuterClass{
+ int number;
+ 
+ public class InnerClass {
+  String name;
+ }
+}
+//main ... 
+OuterClass outer = new OuterClass();
+OuterClass.InnerClass inner = outer.new InnerClass();
+
+//if inner is static
+public class OuterClass {
+ int num;
+ 
+ public static class InnerClass {
+  String name;
+ }
+}
+//main.. since static members does not need objects to access them
+OuterClass.InnerClass inner = new OuterClass.InnerClass();
+
+// inner class inside class function
+public class OuterClass {
+ public void fn1() {
+   class LocalInnerClass {
+      int number;
+      public int getNumber() {
+         return number;
+      }
+   }
+   //this local innerclass obj can be created only within the same function.. not anywhere outside.
+   LocalInnerClass obj = new LocalInnerClass();
+   obj.getNumber();
+ }
+}
+
+ANNONYMOUS INNERCLASS:
+a subclass can be created for a class and methods can be overwritten. but it can be used only once for that object.
+
+public class OuterClass{
+ public static void main(String[] args) {
+   Animal animal = new Animal();
+   animal.makeNoise(); // this is normal stuff
+   
+   //now lets extend animal with annoymouse concept but can be used only once till the life time of this obj/
+   Animal anonyAnimal = new Animal() {
+      @Override
+      public void makeNoise(){
+         System.out.println("Buawawasasahas");
+      }
+   };
+   anonyAnimal.makeNoise();
+ }
+}
+
+2nd way is using Runnable interface.
+  Runnable anonyObj = new Runnable() {
+    @Override
+    public void run(){
+       Sysout("im an anonymouse from runnable");
+    }
+  };
+  anonyObj.run();
+  
+Anonymous is mainly used when u need a subclass object of a parent class but only once.
+
+EXCEPTION:
+
+try{
+ int number = Integer.parseInt("kk");
+}
+catch( NumberFormatException | NullPointerException e){
+ sysout("hey man its bad input");
+}
+ 
+ENUM:
+
+public enum Days{
+  MONDAY(1, 1.0),
+  TUESDAY(2 , 2.0),
+  WEDNESDAY(3, 3.0);
+  
+  public final int dayNumber;
+  final double somnum;
+  
+  public Days(int dayNumber, double somnum){
+    this.dayNumber = dayNumber;
+    this.somnum = somnum;
+  }
+}
+ 
+//in main. we can get array of Days using  
+Days.values()
+
+for(Days day : Days.values(){
+ sysout(day);
+}
+
+
+FILE I/O.
+wRITER:
+BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt"));
+writer.write("Writing to a file");
+writer.flush(); // to flush the contents 
+writer.close(); //without this file will not be written with inputs..
+
+READER:
+BufferedReader reader = new BufferedReader(new FileReader("output.txt"));
+String line;
+while( (line = reader.readLine() ) !=null)
+{
+  sysout(line);
+}
+reader.close(); //important
+
+ARRAYS:
+ // Sorts arr[] in ascending order
+        Arrays.sort(arr);
+        System.out.printf("Modified arr[] : \n%s\n\n",
+                          Arrays.toString(arr));
+ 
+        // Sorts arr[] in descending order
+        Arrays.sort(arr, Collections.reverseOrder());
+        
+        
+PRIMITIVES:
+byte, short, int, long, double(15 decimal digits of precision), char, float(6 decimal digits), boolean
+
+
+EXECUTOR FRAMEWORK:
+
+https://www.geeksforgeeks.org/what-is-java-executor-framework/?ref=gcse
+
+Executor 1: SingleThreadExecutor 
+
+A single thread pool can be obtained by calling the static newSingleThreadExecutor() method of the Executors class. It is used to execute tasks sequentially.
+
+Syntax:
+
+ExecutorService executor = Executors.newSingleThreadExecutor();
+
+Executor 2: FixedThreadPool(n)
+
+As the name indicates, it is a thread pool of a fixed number of threads. The tasks submitted to the executor are executed by the n threads and if there is more task they are stored on a LinkedBlockingQueue. It uses Blocking Queue.
+
+Syntax:
+
+ExecutorService fixedPool = Executors.newFixedThreadPool(2);
+
+Executor 3: CachedThreadPool
+
+Creates a thread pool that creates new threads as needed, but will reuse previously constructed threads when they are available. Calls to execute will reuse previously constructed threads if available. If no existing thread is available, a new thread will be created and added to the pool. It uses a SynchronousQueue queue.
+
+ExecutorService executorService = Executors.newCachedThreadPool()
+
+
+    ScheduledExecutorService executorService
+      = Executors.newSingleThreadScheduledExecutor();
+
+    Future<String> future = executorService.schedule(() -> {
+        // ...
+        return "Hello world";
+    }, 1, TimeUnit.SECONDS);
+
+    ScheduledFuture<?> scheduledFuture = executorService.schedule(() -> {
+        // ...
+    }, 1, TimeUnit.SECONDS);
+
+    executorService.shutdown();
+}
+ScheduledExecutorService can also schedule the task after some given fixed delay:
+
+executorService.scheduleAtFixedRate(() -> {
+    // ...
+}, 1, 10, TimeUnit.SECONDS);
+
+executorService.scheduleWithFixedDelay(() -> {
+    // ...
+}, 1, 10, TimeUnit.SECONDS);
+
+
+
+Why wait(), notify() and notifyAll() methods have to be called from synchronized method or block?
+When a Thread calls wait() on any Object, it must have the monitor on the Object that it will leave and
+ goes in wait state until any other thread call notify() on this Object. 
+Similarly when a thread calls notify() on any Object, it leaves the monitor on the Object 
+and other waiting threads can get the monitor on the Object. 
+Since all these methods require Thread to have the Object monitor, that can be achieved only by synchronization, 
+they need to be called from synchronized method or block.
+
+Comparable:
+its an Interface so do like this.. 
+public class Dog implements Comparable<Dog> {
+  public int compareTo(Dog dog){
+  if(this.age > dog.age)
+  	return 1;
+  else
+    return -1;
+  }
+}
+In main class, then call "Collections.sort(dogList)" 
+
+Comparator: if for example we are using 3rd party jar and they havent implemented Comparable then we can use this.
+Comparator comp = new Comparator<>(){ 
+  public int compare(Dog dog1, Dog dog2) {  //click on comparator interface and u can see the compare method to override
+    if(dog1.age > dog2.age)
+      return 1;
+    else
+      return -1;
+  }
+ };
+Collections.sort(dogList, comp);
+Collections.sort(dogList,(d1,d2) -> d1.age - d2.age);
+Comparator comp = Comparator.comparing(Dog::getAge).thenComparing(Dog::getName,(o1,o2)-> o2.compareTo(o1));
+
+Iterator:
+		Iterator<Employee> it = list.iterator();
+		while(it.hasNext()) {
+			System.out.println(it.next().age);
+		}
+
+
+STRING INTERN:
+string str = new String("Goms").intern();
+string str1 = new String("Goms").intern();
+str == str1
+
+
+BLOCKING QUEUE:
+In addition to queueing, the BlockingQueue interface enables flow control by 
+adding blocking if either BlockingQueue is full or empty. 
+
+A thread attempting to enqueue an element in a full queue will be blocked until another thread clears the queue, 
+either by dequeuing one or more elements or by clearing the queue entirely. 
+It also prevents a thread from deleting from an empty queue until another thread inserts an item. 
+A null value is not accepted by BlockingQueue. Implementations of the Java BlockingQueue interface are thread-safe. 
+BlockingQueue's methods are all atomic and use internal locks or other forms of concurrency management.
+
+BlockingQueue unbounded_queue = new LinkedBlockingDeque();
+
+
+RandomAccess, like the Serializable and Cloneable interfaces, is a marker interface. 
+There are no methods defined in any of these marker interfaces. 
+Rather, they designate a class as having a specific capability. 
+
+The RandomAccess interface indicates whether or not a given java.util.List implementation supports random access.
+ This interface seeks to define a vague concept: what does it mean to be fast? A simple guide is provided in the documentation: 
+ The List has fast random access if repeated access using the 
+List.get( ) method is faster than repeated access using the Iterator.next( ) method.
+
+QUEUES:
+The only difference between the methods is that the offer method throws true or false if the addition is made. 
+As opposed to this, the add method throws an exception when no more additions are possible in the queue
+
+Strings:
+intern()
+ String class is designed with the Flyweight design pattern in mind. 
+ Flyweight is all about re-usability without having to create too many objects in memory.
+ The flyweight design pattern is a structural pattern used to improve memory usage 
+ The Wrapper classes like Integer, Float, Decimal, Boolean, and many other classes like 
+ BigDecimal having the valueOf static factory method to apply the flyweight design pattern 
+ to conserve memory by reusing the objects.
+  Integer value1 = Integer.valueOf(5);
+    Integer value2 = Integer.valueOf(5);
+ 
+    //only one object is created
+    if (value1 == value2) {
+        System.out.println("referencing the same object");
+    }
+ If you use new Integer(5), a new object will be created every time.
+
+ 
+ 
+ String Concatenation Operator +
+If only one operand expression is of type String, 
+then string conversion (§5.1.11) is performed on the other operand to produce a string at run time.
+
+The AutoClosable interface consists of just one method. void close() throws Exception {}. 
+Each AutoClosable resource created in the try statement will be automatically closed without requiring a finally block. 
+If an exception is thrown in the try block and another Exception is thrown while closing the resource, 
+the first Exception is the one eventually thrown to the caller. 
+Think of the close( ) method as implicitly being called as the last line in the try block. 
+If using Java 7 or later editions, use AutoCloseable statements within the try block for more concise & readable code.
+
+Java 7: When a resource (i.e. dbConnect) is defined outside the try-with-resource block you need to close it explicitly in the finally block. 
+You can’t define an object reference in your try-with-resource block, which was a bug.
+
+Connection dbConnect = DriverManager.getConnection("db-url", "db-user", "db-password");
+try (ResultSet rs = dbConnect.createStatement().executeQuery("select * from mytable")) {
+    while (rs.next()) {
+       //read results from rs
+    }
+} catch (SQLException e) {
+    e.printStackTrace();
+} finally {
+    if (null != dbConnect)
+        dbConnect.close();
+    }
+}
+Java 9 fixed it:
+
+Connection dbConnect = DriverManager.getConnection("db-url", "db-user", "db-password");
+try (dbConnect; ResultSet rs = dbConnect.createStatement().executeQuery("select * from mytable")) {
+    while (rs.next()) {
+       //read results from rs
+    }
+} catch (SQLException e) {
+     e.printStackTrace();
+}
+
+Final modifier on a reference variable just means that the reference cannot be changed to reference a different object once assigned. 
+This does not mean that the variable is a constant because the values of the object it refers to can be modified 
+unless the values themselves are marked as final. 
+For example, an Employee object marked as final may have member variables “firstName”, and “lastName”. 
+The values of “firstName”, and “lastName” can be modified if they themselves are not marked as final.
+
+https://www.java-success.com/core-java-interview-questions/
+https://www.java-success.com/java-multithreading-interview-questions-and-answers/
+https://www.java-success.com/java-modifiers-interview-questions-and-answers/
+https://www.java-success.com/java-garbage-collection-interview-questions-and-answers/
+https://www.java-success.com/jee-overview-interview-questions-and-answers/
+https://www.java-success.com/java-futuretask-example/
+https://www.java-success.com/10-%e2%99%a6-executorservice-vs-forkjoin-future-vs-completablefuture-interview-qa/
+https://www.java-success.com/producer-and-consumer-java-multi-threading-code/
+
+The garbage collection cannot be forced. The garbage collector runs in low memory situations. 
+When it runs, it releases the memory allocated by an unreachable object. 
+The garbage collector runs on a separate JVM created low priority daemon (i.e. background) thread. 
+You can nicely ask the garbage collector to prioritise the garbage collection by calling System.gc( ) 
+but you can’t force it.
+
+What is the difference between yield and sleep? What is the difference between the methods sleep( ) and wait( )?
+A7. When a task invokes yield( ), it changes from running state to runnable state. When a task invokes sleep ( ), 
+it changes from running state to waiting/sleeping state.
+
+The method wait(1000) causes the current thread to wait up to one second for a signal (i.e. notify()/notifyAll()) from other threads. 
+A thread could wait less than 1 second if it receives the notify( ) or notifyAll( ) method call. 
+The call to sleep(1000) causes the current thread to sleep for at least 1 second.
+We can use Thread class sleep() method to pause the execution of Thread for certain time. 
+Note that this will not stop the processing of thread for specific time, 
+once the thread awake from sleep, it’s state gets changed to runnable and based on thread scheduling,
+ it gets executed.
+
+java.util.Timer is a utility class that can be used to schedule a thread to be executed at a certain time in future. 
+Java Timer class can be used to schedule a task to be run one-time or to be run at regular intervals.
+
+java.util.TimerTask is an abstract class that implements Runnable interface and
+ we need to extend this class to create our own TimerTask that can be scheduled using java Timer class.
+
+Scanner scanner = new Scanner(System.in);
+String myString = scanner.next();
+int myInt = scanner.nextInt();
+scanner.close();
+
+System.out.println("myString is: " + myString);
+System.out.println("myInt is: " + myInt);
+
+https://www.journaldev.com/1162/java-multithreading-concurrency-interview-questions-answers
+https://www.journaldev.com/1037/java-thread-wait-notify-and-notifyall-example
+https://www.journaldev.com/2377/java-lock-example-reentrantlock
+https://www.journaldev.com/1050/java-timer-timertask-example
+https://www.journaldev.com/1095/atomicinteger-java
+https://www.journaldev.com/1034/java-blockingqueue-example
+https://www.journaldev.com/2389/java-8-features-with-examples
+
+https://dzone.com/articles/jvm-memory-architecture-and-gc?fromrel=true
+https://www.geeksforgeeks.org/metaspace-in-java-8-with-examples/
+
+
+Furthermore, if at some point we decide to add more default methods to the Vehicle interface, 
+the application will still continue working, and we won't have to force the class to provide implementations for the new methods.
+
+The most common use of interface default methods is to incrementally provide additional functionality 
+to a given type without breaking down the implementing classes.
+
+In addition, we can use them to provide additional functionality around an existing abstract method.
+
+In this case, the code simply won't compile, as there's a conflict caused by multiple interface inheritance (a.k.a the Diamond Problem). 
+The Car class would inherit both sets of default methods. So which ones should we call?
+To solve this ambiguity, we must explicitly provide an implementation for the methods.
+
+Defining a static method within an interface is identical to defining one in a class. 
+Moreover, a static method can be invoked within other static and default methods.
+
+interface Animal {
+    public static void identify() {
+        System.out.println("This is an animal");
+    }
+}
+class Cat implements Animal {}
+
+public static void main(String[] args) {
+    Animal.identify();
+    Cat.identify(); // This does not compile, because interface static methods do not inherit. (Why?)
+}
+Cat can implement multiple interfaces each of which can have a static implementation. 
+Therefore, the compiler would not know which one to choose?
+
+
+CLASS LOADERS:
+class loaders are hierarchical. Class loaders creates a names space. the very first classes is loaded with static main().
+All JVMs have atleast 1 class loaders embeded within classed the primordial or bootstrap class loader.
+class loaders have parent child relationship which ensures that child wont load the class that is already loaded by parent.
+
+Java packages are namespaces. They allow programmers to create small private areas in which to declare classes. 
+The names of those classes will not collide with identically named classes in different packages.
+
+Classes are statically loaded with Java’s “new” operator.
+   Car c = new Car( );
+
+Dynamic loading is a technique for programmatically invoking the functions of a classloader at runtime.
+   Object vehicle = Class.forName (classNameSupplied).newInstance(); 
+classLoader.loadClass("com.SomeClass"); -> lazy initialization
+
+ClassLoader classLoader = getClass().getClassLoader();         // works in any class
+
+Static class loading throws NoClassDefFoundError if the class is NOT FOUND 
+whereas the dynamic class loading throws ClassNotFoundException if the class is NOT FOUND.
+
+MEMORY LEAKS:
+*When defining new classes, a very common oversight is not writing proper overridden methods for equals() and hashCode() methods.
+
+HashSet and HashMap use these methods in many operations, and if they're not overridden correctly, 
+then they can become a source for potential memory leak problems.
+
+Here we're using Person as a key. Since Map doesn't allow duplicate keys, 
+the numerous duplicate Person objects that we've inserted as a key shouldn't increase the memory.
+
+But since we haven't defined proper equals() method, the duplicate objects pile up and increase the memory, 
+that's why we see more than one object in the memory. 
+
+*Every non-static Inner Class has, by default, an implicit reference to its containing class. If we use this inner class' 
+then even after our containing class' object goes out of scope, it will not be garbage collected.
+
+* close resources in finally()
+
+* pay close attention to static variables ( like massive lists or map made static can eat up heap ).
+
+* each thread will hold an implicit reference to its copy of a ThreadLocal variable and will maintain its own copy, 
+instead of sharing the resource across multiple threads, as long as the thread is alive.
+
+ Eclipse Memory Analyzer
+ Java Visual VM
+ JCONSOLE
+
+Analysing memory leak using visualvm is not that easy. It has a tool/plugin called 'sampler'. 
+This can be used to sample memory or cpu. You can take snapshot at regular interval and look for possible leaks. 
+VisualVM help you to take heapdump (using Heap Dump on Monitor tab).
+
+A heap dump is a snapshot of all the objects that are in memory in the JVM at a certain moment. 
+Heap dumps are usually stored in binary format hprof files. We can open and analyze these files using tools like jhat or JVisualVM
+ 
+jmap is a tool to print statistics about memory in a running JVM. We can use it for local or remote processes.
+To capture a heap dump using jmap, we need to use the dump option:
+jmap -dump:[live],format=b,file=<file-path> <pid> 
+
+jcmd is a very complete tool that works by sending command requests to the JVM.
+ We have to use it in the same machine where the Java process is running.
+One of its many commands is the GC.heap_dump. 
+
+Above are manual mothods.. to get heapdumps automatically,
+Java provides the HeapDumpOnOutOfMemoryError command-line option, which generates a heap dump when a java.lang.OutOfMemoryError is thrown:
+java -XX:+HeapDumpOnOutOfMemoryError
+
+If we open JConsole and connect to a running Java process, 
+we can navigate to the MBeans tab and find the HotSpotDiagnostic under com.sun.management. 
+ 
+ What is a “transient” modifier? Can you mark a static variable as transient?
+A5.  It marks a member variable not to be serialized when it is persisted to streams of bytes. 
+It cannot be used with a static variable as a static variable belongs to a class, not to an object. 
+You can only serialize an object.
+
+
+The ThreadContext allows applications to store information either in a Map or a Stack. 
+
+Fail-Fast Iterators:
+Collections maintain an internal counter called modCount. 
+Each time an item is added or removed from the Collection, this counter gets incremented.
+When iterating, on each next() call, the current value of modCount gets compared with the initial value. 
+If there's a mismatch, it throws ConcurrentModificationException which aborts the entire operation.
+
+Default iterators for Collections from java.util package such as ArrayList, HashMap, etc. are Fail-Fast.
+
+If during iteration over a Collection, an item is removed using Iterator‘s remove() method, 
+that's entirely safe and doesn't throw an exception.
+However, if the Collection‘s remove() method is used for removing an element, it throws an exception.
+
+Fail-Safe iterators favor lack of failures over the inconvenience of exception handling.
+Those iterators create a clone of the actual Collection and iterate over it. 
+If any modification happens after the iterator is created, 
+the copy still remains untouched. Hence, these Iterators continue looping over the Collection even if it's modified.
+The Fail-Safe Iterators have a few disadvantages, though. 
+One disadvantage is that the Iterator isn't guaranteed to return updated data from the Collection, 
+as it's working on the clone instead of the actual Collection.
+Another disadvantage is the overhead of creating a copy of the Collection, both regarding time and memory.
+Iterators on Collections from java.util.concurrent package such as ConcurrentHashMap, 
+CopyOnWriteArrayList, etc. are Fail-Safe in nature.
+
+Serializable is a marker interface (has no data member and method). 
+It is used to “mark” java classes so that objects of these classes may get certain capability. 
+Other examples of marker interfaces are:- Cloneable and Remote.
+
+Points to remember
+1. If a parent class has implemented Serializable interface then 
+child class doesn’t need to implement it but vice-versa is not true.
+2. Only non-static data members are saved via Serialization process.
+3. Static data members and transient data members are not saved via Serialization process.
+So, if you don’t want to save value of a non-static data member then make it transient.
+4. Constructor of object is never called when an object is deserialized.
+5. Associated objects must be implementing Serializable interface.
+
+The ObjectOutputStream class contains writeObject() method for serializing an Object.
+The ObjectInputStream class contains readObject() method for deserializing an object.
+
+SerialVersionUID
+The Serialization runtime associates a version number with each Serializable class called a SerialVersionUID, 
+which is used during Deserialization to verify that sender and receiver of a serialized object have loaded classes for that object 
+which are compatible with respect to serialization. 
+If the receiver has loaded a class for the object that has different UID than that of corresponding sender’s class,
+ the Deserialization will result in an InvalidClassException. 
+ A Serializable class can declare its own UID explicitly by declaring a field name.
+It must be static, final and of type long.
+
+In case of transient variables:- A variable defined with transient keyword is not serialized during serialization process.
+This variable will be initialized with default value during deserialization. 
+(e.g: for objects it is null, for int it is 0).
+In case of static Variables:- A variable defined with static keyword is not serialized during serialization process.
+This variable will be loaded with current value defined in the class during deserialization.
+
+
+The default Object.clone() is indeed a shallow copy. 
+However, it's designed to throw a CloneNotSupportedException unless your object implements Cloneable.
+
+And when you implement Cloneable, you should override clone() to make it do a deep copy, 
+by calling clone() on all fields that are themselves cloneable.
+
+
+JVM (Java Virtual Machine): JVM(Java Virtual Machine) acts as a run-time engine to run Java applications. 
+JVM is the one that actually calls the main method present in a Java code. 
+JVM is a part of JRE(Java Runtime Environment).
+JRE (Java Runtime Environment): JRE refers to a runtime environment in which Java bytecode can be executed. 
+It implements the JVM (Java Virtual Machine) and provides all the class libraries and other support files that JVM uses at runtime. 
+So JRE is a software package that contains what is required to run a Java program. 
+Basically, it’s an implementation of the JVM which physically exists. 
+JDK(Java Development Kit): It is the tool necessary to compile, document and package Java programs.
+The JDK completely includes JRE which contains tools for Java programmers. 
+The Java Development Kit is provided free of charge. Along with JRE, it includes an interpreter/loader, a compiler (javac), 
+an archiver (jar), a documentation generator (javadoc) and other tools needed in Java development. 
+In short, it contains JRE + development tools.
+
+The JVM performs the following main tasks:
+Loads code
+Verifies code
+Executes code
+Provides runtime environment
+
+A static method cannot access non-static variables or methods because static methods can be accessed without instantiating the class, 
+so if the class is not instantiated the variables are not initialized and thus cannot be accessed from a static method.
+
+A class can be said to be static class if all the variables and methods of the class are static and the constructor is private. 
+Making the constructor private will prevent the class to be instantiated. 
+So the only possibility to access is using the Class name only.
+
+From the memory perspective, static variables are stored in the heap memory.
+We can only declare static variables at the class level.
+static methods in Java are resolved at compile time. 
+Since method overriding is part of Runtime Polymorphism, static methods can't be overridden.
+Abstract methods can't be static.
+static methods can't use this or super keywords.
+static methods can't access instance variables and instance methods directly.
+
+If static variables require additional, multi-statement logic during initialization, we can use a static block.
+public class StaticBlockDemo {
+    public static List<String> ranks = new LinkedList<>();
+
+    static {
+        ranks.add("Lieutenant");
+        ranks.add("Captain");
+        ranks.add("Major");
+    }
+    
+    static {
+        ranks.add("Colonel");
+        ranks.add("General");
+    }
+}
+static nested classes behave exactly like any other top-level class but are enclosed in the only class that will access it, 
+to provide better packaging convenience.
+
+static nested classes do not have access to any instance members of the enclosing outer class. 
+It can only access them through an object's reference.
+static nested classes can access all static members of the enclosing class, including private ones.
+
+Java programming specification doesn't allow us to declare the top-level class as static. 
+Only classes within the classes (nested classes) can be made as static.
+
+Creating objects:
+new , Class.forName(".class").getInstance(), 
+            Constructor<GFG> constructor
+                = GFG.class.getDeclaredConstructor();
+ 
+            GFG r = constructor.newInstance();
+            
+Default members in Class A are visible to the other classes which are inside the package and 
+invisible to the classes which are outside the package.            
+Protected is the same as Default but if a class extends then it is visible even if it is outside the package.
+the subclass extending protected member can only inherit it. cannot access it by creating object of the superclass and use dot operator.
+the subclass of subclass can also inherit protected member.
+
+Local variables cannot have access modifiers. it will result in compiler error.
+it can however have final keyword.
+
+Abstract doesnt go with final and private.
+
+Native :
+implemented in platform-dependent code often in C.. its declared like abstract method with ;.
+
+Var-agrs:
+void doStuff(char c, int... x) { }
+var-args must be the last parameter in the method signature and u can ve only 1 var-arg in a method.
+
+ Using try/catch:
+  By declaring throws keyword:
+  
+A Min-Heap is a complete binary tree in which the value in each internal node is smaller than or 
+equal to the values in the children of that node.
+
+public int getRandom() {
+    return list.get(rand.nextInt(list.size()));
+  }
+
+CLIENT SOCKET:
+  
+Socket s=new Socket("localhost",6666);  
+DataOutputStream dout=new DataOutputStream(s.getOutputStream());  
+dout.writeUTF("Hello Server");  
+dout.flush();  
+dout.close();  
+s.close();  
+            
+SERVER SOCKET:
+ServerSocket ss=new ServerSocket(6666);  
+Socket s=ss.accept();//establishes connection   
+DataInputStream dis=new DataInputStream(s.getInputStream());  
+String  str=(String)dis.readUTF();  
+System.out.println("message= "+str);  
+ss.close();  
+            
+            
+            
+void : java keyword indicates method will not return anything. Used for methods
+
+Void : Wrapper around void. It extends Object class.
+
+Needed as Generic does not support primitive datatypes. (void considered primitive is a complex case but this is just to explain)
+
+Should be used for reflection
+
+Constructor<Void> constructor = Void.class.getConstructor()
+null indicates no values. Used for objects as comparison to void which is used for methods.
+
+A process is an execution of a program but a thread is a single execution sequence within the process.
+
+The java.util.concurrent.Executor is based on the producer-consumer design pattern, 
+where threads that submit tasks are producers and the threads that execute tasks are consumers.
+
+Future is the interface and FutureTask is the base implementation of the Future with methods to start and cancel a computation.
+The FutureTask provides asynchronous computation with methods to start and cancel a computation, 
+query to see if the computation is complete, and retrieve the result of the computation. 
+The result can only be retrieved when the computation has completed. 
+
+When you have two separate processes running on different hosts, you need to communicate via network sockets. 
+You could use an existing protocol standard like SOAP. 
+When you are sure that none of the two applications will ever be rewritten in a different programming language, 
+you could also use ObjectOutputStream and ObjectInputStream connected to network sockets and 
+exchange Java objects directly between the two programs. 
+Or you could design your own protocol from scratch which is optimized for your application.
+When the processes run on the same host, communicating via network is often still a good option. 
+But there are others like communicating via writing and reading temporary files. 
+You could also go the UNIX way, and have one application write to System.out and
+pipe its output to the other program which reads it with System.in.
+
+https://www.java67.com/2020/05/how-to-do-inter-process-communication-in-java.html
+
+https://www.geeksforgeeks.org/remote-method-invocation-in-java/
+
+DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
+        System.out.println("open a DB connection");
+
+        connection = DriverManager.getConnection(
+           "jdbc:oracle:thin:@" +
+           host + ":" +
+           port + ":" +
+           dbName,
+           userId,
+           password);
+           

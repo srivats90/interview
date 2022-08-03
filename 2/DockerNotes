@@ -1,0 +1,31 @@
+DOCKER:
+docker pull redis
+docker run redis
+docker ps
+docker run -d redis   (to run in backgrnd)
+
+if u want to restart docker, u need the id which u get frm docker ps command
+
+docker stop <id>
+docker start <id>
+
+docker ps -a -> if u forgot id use this command which shows the container that are running and not running(stopped containers)
+docker start <id>
+
+to bind to a port:
+docker run -p6001:6000 redis   -> here 6000 is port of redis.. 6001 port of laptop machine..
+docker run i-6002:6000 redis:4.0    
+
+docker logs <container_id>
+docker logs <name>
+
+docker run -d -p6003:6000 --name redis_kk redis:4.0
+
+ToLogin to a docker using bash to view stuffs: <it> stands for interact
+docker exec -it <id> /bin/bash
+ -> this gives a virtual filesystem.. where u can check env variables etc. 
+ -> use exit command to exit 
+ 
+ docker run redis:lastest -> creates container from image
+ docker start works on the containers.. 
+

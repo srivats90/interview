@@ -1,0 +1,476 @@
+JPA -> examplematcher 
+
+SPRINGBOOT TIPS:
+Spring dev tools dependency works like webpack. Spring Tool Suite works automatically. IntelliJ IDea needs 2 additional steps for auto build and run.
+
+Validate:
+@Validate
+
+@NotBlank(message = "Please add dept name")
+@Length(max = 5, min = 1)
+@Size(max = 5, min = 1 )
+@Email
+@Positive
+@Negative
+@PositiveOrZero
+@NegativeOrZero
+@Future   // dates
+@FutureOrPresent  // dates
+
+
+Lombok
+@Builder   -> implements builder pattern
+
+JUNIT and Mockito
+
+Mock Method annotations :
+@BeforeEach -> calls every time before a test case is run.
+@BeforeAll -> calls once before executing all test cases.
+
+@AfterEach
+@AfterAll
+
+@MockBean
+DepartementRepository departmentRepository;
+
+@BeforeEach
+void setup(){
+	//Department is an entity and it has lombok's @Builder annotation which is like Example where an object will be built only based on values we pass
+	Department dep = Department.builder().departmentName("IT").departmentCode("IT-06").departmentId(1).build();
+	
+	//means whenever in ur unit test case "findbyDepartmentNameIgnoreCase" method is called, department object will be returned.
+	Mockito.when(departmentRepository.findByDepartmentNameIgnoreCase("IT")).thenReturn(department);
+}
+
+@Test
+@DisplayName("Get data based on department Name")   //this is used to get bettr name than fn name in reports
+@Disabled // this is used to disable annotation
+public void whenValidDeptName_thenDeptShouldBeFound(){
+	//we are testing the service layer only
+	Department dept = departmentRepository.fetchDepartmentByName("IT");
+	
+	//service layer calls repo layer which is mocked above.
+	
+	assertEquals("IT",dept.getDepartmentName());
+	
+}
+
+//Testing JPA Repository layer
+
+@DataJpaTest  // this annotation will store data in db only for this testing and remove once testin done.
+class DepartmentRepositoryTest{
+
+	@Autowired
+	private DepartmentRepository deptRepo;
+	
+	//also needed entity manager for testing repo layer.
+	@Autowired
+	private TestEntityManager entityManager;
+	
+	@BeforeEach
+	void setup(){
+		Department dept = Department.builder().departmentName("Mech").deptartmentId(1).build();
+		
+		entityManager.persist(dept);
+	}
+	
+	@Test
+	public void whenFindById(){
+		Department dept = deptRepo.findById(1).get();
+		assertEquals("Mech", dept.getDepartmentName());
+	}
+
+}
+
+JUNIT for Controller:
+
+@WebMvcTest(DepartmentController.class)
+class DepartmentControllerTest {
+	
+	@Autowired
+	private MockMvc mockMvc;
+	
+	//since testing controller, we need to mock the service
+	@MockBean
+	private DeptService deptService;
+	
+	@Autowired
+	Department dept;
+	
+	@BeforeEach
+	void setup() {
+		dept = Department.builder().///.build();			//-> this is entire dept as output.
+	}
+	
+	@Test  
+	void saveDepartment(){  //this is saveDept of service layer.. it takes entire dept as input and entire dept as output.
+		Department inputdept = Department.builder().///.build();			//-> this is entire dept as input. input wont have deptId.
+		
+		Mockito.when(deptService.saveDepartment(inputdept)).thenReturn(dept);
+		
+		mockMvc.perform(MockMvcBuilders.post("/departments").contentType(MediaType.APPLICATION_JSON)
+		.content("paste the whole postman json sturcture here")).andExpect(MockMvcResultMatchers.status.isOk());
+	}
+}
+
+SPRINGBOOT PROFILES:
+https://www.youtube.com/watch?v=zvR-Oif_nxg
+4.10.00   how to have different profiles dev, qa, prod under same application.yml itself.
+in .yml --- is used to separate documents under same .yml file.
+
+customer actuator endpoints - 4:24:00
+
+JPA Table constraints : 4:57:00
+
+@Modifying -> is used to enhance @Query annotation on JPA repo methods where u can write insert, update, delete, create operation
+
+6.9.00 -> unidirectional and bidirectional oneToOne Mapping.
+
+JPA recommends to use ManyToOne than OneToMany because list is used in the latter.
+
+6:28:00 -> paging and sorting repository
+
+6:40:00 -> ManyToMany -> means mapping table is needed
+
+
+You autowire the interface so you can wire in a different implementation--that's one of the points of coding to the interface, 
+not the class.
+As long as there is only a single implementation of the interface 
+and that implementation is annotated with @Component with Spring's component scan enabled, 
+Spring framework can find out the (interface, implementation) pair.
+ If component scan is not enabled, then you have to define the bean explicitly in your application-config.xml 
+ (or equivalent spring configuration file).
+
+Do I need @Qualifier or @Resource?
+
+Once you have more than one implementation, then you need to qualify each of them and during auto-wiring, 
+you would need to use the @Qualifier annotation to inject the right implementation, 
+along with @Autowired annotation. If you are using @Resource (J2EE semantics),
+ then you should specify the bean name using the name attribute of this annotation.
+
+Why do we autowire the interface and not the implemented class?
+
+Firstly, it is always a good practice to code to interfaces in general. 
+Secondly, in case of spring, you can inject any implementation at runtime.
+A typical use case is to inject mock implementation during testing stage.
+
+@Component    
+class MyRunner
+{
+     @Autowire
+     @Qualifier("b") 
+     IA worker;
+
+     ....
+     worker.someFunction();
+}
+
+@Qualifiers -> is used when you have 2 implementation classes for an interface and when u autowired an interface, 
+you can specify which implementation you need.
+
+@Primary Annotation
+If we know that we favor one implementation over another by default, 
+we can forego the @Qualifier annotation and add the @Primary annotation directly to a class.
+
+
+?@Component Preferable for component scanning and automatic wiring.
+
+When should you use @Bean?
+
+Sometimes automatic configuration is not an option. 
+When? Let's imagine that you want to wire components from 3rd-party libraries
+ (you don't have the source code so you can't annotate its classes with @Component), 
+so automatic configuration is not possible.
+The @Bean annotation returns an object that spring should register as bean in application context. 
+The body of the method bears the logic responsible for creating the instance.
+
+ENTITY MANAGER:
+@Autowired 
+EntityManager em;
+
+em.getTransaction.begin();
+
+StringBuilder sb = new StringBuilder();
+sb.append("SELECT FROM ").append("STUDENT ").append("where STUDENT_ID=:studentId");
+
+Query query = em.createQuery(sb.toString());
+query.setParameter("studentId",studentId);
+int rows = query.executeUpdate();
+em.getTransaction.commit();
+
+em.getTrasaction.begin();
+sb.append("select count(*) from student where student_id=:studentId")
+Query query = em.createNativeQuery(sb.toString());
+query.setParameter("studentId", studentId);
+int count = ((Number)query.getSingleResult()).intValue();
+
+ENTITY CLASS:
+An entity class must fulfill the following requirements:
+
+The class must have a no-argument constructor.
+The class can't be final.
+The class must be annotated with @Entity annotation.
+The class must implement a Serializable interface if value passes an empty instance as a detached object.
+
+restTemplate.postForObject
+return ResponseEntity.created(uriComponents.toUri()).body(getMappingJacksonValue(t,fields));
+
+@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class})
+If the class is not on the classpath, then to exclude the auto-configuration, you have to mention the following code:
+
+@EnableAutoConfiguration(excludeName={Sample.class})
+
+
+https://www.java-success.com/13-spring-interview-questions-answers/
+https://www.java-success.com/spring-di-ioc-explained/
+
+https://dzone.com/articles/dependency-injection-in-spring
+
+
+First, Spring attempts to create the Foo object. 
+During this process, Spring recognizes that a Bar object is required. 
+In order to construct the Bar object, a Foo object is needed. 
+Since the Foo object is currently under construction—the original reason a Bar object was being created
+—Spring recognizes that a circular reference may have occurred.
+
+One of the simplest solutions to this problem is to use the @Lazy annotation on one of the classes and at the point of injection. 
+This instructs Spring to defer the initialization of the annotated bean and the annotated @Autowired location. 
+This allows one of the beans to be successfully initialized, thus breaking the circular dependency chain. 
+
+The logic contained in the ApplicationContext is often referred to as the Spring Container. 
+In general, a Spring application can have more than one ApplicationContext, 
+and each ApplicationContext can have separate configurations.
+ For example, one ApplicationContext may be configured to use the CombustionEngine, 
+ as its Engine implementation while another container
+  may be configured to use the ElectricEngine as its implementation. 
+  
+The “HttpMessageConverter” is a good example of the “Strategy design pattern” with different implementations 
+like “MappingJackson2HttpMessageConverter” to read and write JSON using Jackson’s ObjectMapper, 
+and “MappingJackson2XmlHttpMessageConverter” to read and write XML using Jackson XML extension’s XmlMapper,
+ “StringHttpMessageConverter” to read and write Strings from the HTTP request and response, 
+ “FormHttpMessageConverter” to read and write form data from the HTTP request and response, and so on. 
+ You can also create your own custom implementation of the “HttpMessageConverter”.
+ 
+ 
+@Bean
+public SimpleMappingExceptionResolver exceptionResolver() {
+    SimpleMappingExceptionResolver exceptionResolver = new SimpleMappingExceptionResolver();
+ 
+    Properties exceptionMappings = new Properties();
+ 
+    exceptionMappings.put("java.lang.Exception", "error/error");
+    exceptionMappings.put("java.lang.RuntimeException", "error/error");
+ 
+    exceptionResolver.setExceptionMappings(exceptionMappings);
+ 
+    Properties statusCodes = new Properties();
+ 
+    statusCodes.put("error/404", "404");
+    statusCodes.put("error/error", "500");
+ 
+    exceptionResolver.setStatusCodes(statusCodes);
+ 
+    return exceptionResolver;
+} 
+
+@ExceptionHandler({IOException.class, java.sql.SQLException.class})
+public ModelAndView handleIOException(Exception ex) {
+    ModelAndView model = new ModelAndView("IOError");
+    model.addObject("exception", ex.getMessage());
+    return model;
+} 
+
+@Configuration
+@ConfigurationProperties(prefix = "mail")
+public class ConfigProperties {
+    
+    private String hostName;
+    private int port;
+    private String from;
+
+    // standard getters and setters
+}
+Note: If we don't use @Configuration in the POJO, 
+then we need to add @EnableConfigurationProperties(ConfigProperties.class) 
+in the main Spring application class to bind the properties into the POJO:
+
+@SpringBootApplication
+@EnableConfigurationProperties(ConfigProperties.class)
+public class EnableConfigurationDemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EnableConfigurationDemoApplication.class, args);
+    }
+}
+
+https://www.baeldung.com/configuration-properties-in-spring-boot
+
+Handler interceptors are used when you want to apply specific behaviour to certain requests. 
+Handler Interceptors should implement the interface “HandlerInterceptor” to provide specific behaviours 
+via “preHandle(..)”, “postHandle(..)”, and “afterCompletion(..)” methods
+//....
+public class LoggingInterceptor implements HandlerInterceptor  {
+    
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+        throws Exception {
+        //....
+    }
+    
+    @Override
+    public void postHandle(    HttpServletRequest request, HttpServletResponse response,
+            Object handler, ModelAndView modelAndView) throws Exception {
+        //...
+    }
+    
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+            Object handler, Exception ex) throws Exception {
+        //...        
+    }
+} 
+you can also extends HandlerInterceptorAdapter.
+finally the Java Configuration class will have an entry as
+@Override
+public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(new LoggingInterceptor());
+    registry.addInterceptor(new TransactionInterceptor()).addPathPatterns("/account");
+}
+
+
+//SECURITY:
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-web</artifactId>
+    <version>4.0.4.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-config</artifactId>
+    <version>4.0.4.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-taglibs</artifactId>
+    <version>4.0.4.RELEASE</version>
+</dependency>
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+ 
+   //.....
+}
+
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages = "com.mytutorial.controller")
+@Import(value = { SecurityConfiguration.class })
+public class SimpleWebConfiguration {
+    //......
+}
+
+https://www.interviewbit.com/spring-boot-interview-questions/
+https://www.mygreatlearning.com/blog/spring-boot-interview-questions/
+https://www.baeldung.com/spring-bean-scopes
+
+@Controller Map of the model object to view or template and make it human readable 
+but @RestController simply returns the object and object data is directly written in HTTP response as JSON or XML.
+
+
+@Component auto detects and configures the beans using classpath scanning whereas @Bean explicitly declares a single bean, rather than letting Spring do it automatically.
+@Component does not decouple the declaration of the bean from the class definition where as @Bean decouples the declaration of the bean from the class definition.
+@Component is a class level annotation whereas @Bean is a method level annotation and name of the method serves as the bean name.
+@Component need not to be used with the @Configuration annotation where as @Bean annotation has to be used within the class which is annotated with @Configuration.
+We cannot create a bean of a class using @Component, if the class is outside spring container whereas we can create a bean of a class using @Bean even if the class is present outside the spring container.
+@Component has different specializations like @Controller, @Repository and @Service whereas @Bean has no specializations.
+
+A Classpath scanning basically means, detecting the classes that need to be managed by the Spring under a specified package. 
+
+@Component (and @Service and @Repository) are used to auto-detect and auto-configure beans using classpath scanning. 
+There's an implicit one-to-one mapping between the annotated class and the bean (i.e. one bean per class). 
+Control of wiring is quite limited with this approach, since it's purely declarative.
+
+@Bean is used to explicitly declare a single bean, rather than letting Spring do it automatically as above. 
+It decouples the declaration of the bean from the class definition, 
+and lets you create and configure beans exactly how you choose.
+
+Inversion of Control is a principle in software engineering which transfers the control of objects 
+or portions of a program to a container or framework.
+IoC Container is a framework that is used for implementing automatic dependency injection. 
+It manages object creation and its lifetime. It, it also injects dependencies into the class.
+
+Dependency Injection is passing dependency to other objects or framework( dependency injector).
+decoupling the creation of object (in other word, separate usage from the creation of object)
+ability to replace dependencies (eg: Wheel, Battery) without changing the class that uses it(Car)
+promotes "Code to interface not to implementation" principle.
+
+Dependency injection is a programming technique that makes a class independent of its dependencies. 
+This is achieved by decoupling the usage of an object from its creation. 
+
+Dependency injection allows the creation of dependent objects outside of a class, 
+and it provides those objects to a class in different ways. 
+The user can move the creation and binding of the dependent objects outside of the class that depends on them, using dependency injection.
+High level modules should not depend upon low level modules. Both should depend upon abstractions.
+
+
+In the Spring framework, the interface ApplicationContext represents the IoC container. 
+The Spring container is responsible for instantiating, configuring and assembling objects known as beans, 
+as well as managing their life cycles.
+
+@EnableAutoConfiguration in spring boot tells how you want to configure spring, 
+based on the jars that you have added in your classpath. 
+For example, if you add spring-boot-starter-web dependency in your classpath, 
+it automatically configures Tomcat and Spring MVC.
+AutoConfiguration is a process by which Spring Boot automatically configures all the infrastructural beans.
+
+@JsonPropertyOrder
+We can use the @JsonPropertyOrder annotation to specify the order of properties on serialization.
+
+Jackson
+Jackson is a suite of data-processing tools for Java. 
+It allows to read and write data in JSON, Avro, BSON, CBOR, CSV, Smile, (Java) Properties, Protobuf, XML or YAML format.
+
+Jackson is auto-configured. It comes with the spring-boot-starter-json. 
+When Jackson is on the classpath an ObjectMapper bean is automatically configured. 
+The spring-boot-starter-json is pulled with the spring-boot-starter-web.
+
+In Spring objects are automatically converted to JSON with the Jackson library. 
+
+The. @JsonIgnore. annotation marks a field in a POJO to be ignored by Jackson during serialization and deserialization. 
+
+Injecting a property with the @Value annotation is straightforward:
+
+@Value( "${jdbc.url}" )
+private String jdbcUrl;
+
+The @PropertySource annotation is repeatable according to Java 8 conventions. Therefore, if we're using Java 8 or higher, we can use this annotation to define multiple property locations:
+
+@PropertySource("classpath:foo.properties")
+@PropertySource("classpath:bar.properties")
+public class PropertiesWithJavaConfig {
+    //...
+}
+Of course, we can also use the @PropertySources annotation and specify an array of @PropertySource. This works in any supported Java version, not just in Java 8 or higher:
+
+@PropertySources({
+    @PropertySource("classpath:foo.properties"),
+    @PropertySource("classpath:bar.properties")
+})
+public class PropertiesWithJavaConfig {
+    //...
+}
+
+A test method annotated with @Ignore will not be executed. 
+If a test class is annotated with @Ignore, then none of its test methods will be executed. 
+
+
+The Spring Boot Actuator provides the @Endpoint annotation to specify the endpoint.
+
+By default, this endpoint is allowed for both HTTP and JMX.
+
+The @Endpoint-annotated class will have  @ReadOperation,  @WriteOperation, and  @DeleteOperation. 
+These annotated methods will provide a new endpoint for all of these endpoints.
+
+@Selector is an annotation to mark the method argument as part of the request URI.
+
+

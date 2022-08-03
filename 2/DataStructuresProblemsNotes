@@ -1,0 +1,133 @@
+HEAP:
+
+finding max K elements means use minheap ( (n1 , n2) -> n1 - n2 )
+	here nums[j] > minheap.peek()  -> store largest numbers in the heap
+
+finding the min K elements means use maxheap ( ( n1, n2) -> n2 - n1)
+	here nums[j] < maxheap.peek() -> store smallest numbers in the heap
+
+BST DEPTH:
+class Solution {
+    public int maxDepth(TreeNode root) {
+        if(root == null)
+            return 0;
+        return 1+Math.max(maxDepth(root.left), maxDepth(root.right));
+    }
+}
+
+Binary Search:
+private static int binarySearch(int[] arr, int target) {
+    int low = 0;
+    int high = arr.length - 1;
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      if (arr[mid] == target)
+        return mid;
+      if (arr[mid] < target) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    if (low > 0) {
+      return low - 1;
+    }
+    return low;
+  }
+
+Inorder traversal : root will be the first node.
+Postorder traversal : root will be the last node.
+
+construct binary tree from inorder n preorder
+https://www.youtube.com/watch?v=FBaSrNSf9po   
+
+inoder values of BST are in sorted order
+
+to find mid of a linked list, use fast and slow pointers.. 
+when fast.next becomes null.. then slow pointer becomes the mid.
+
+BST problems : first find inorder ArrayList.. then balanace it.. 
+	private static TreeNode balanceIt(List<Integer> list, int low, int high) {
+
+		if (low > high)
+			return null;
+
+		int mid = (high - low + 1) / 2 + low;
+		TreeNode node = new TreeNode(list.get(mid));
+
+		node.left = balanceIt(list, low, mid - 1);
+		node.right = balanceIt(list, mid + 1, high);
+
+		return node;
+
+	}
+
+	private static void inorder(TreeNode root, List<Integer> list) {
+
+		if (root == null)
+			return;
+
+		inorder(root.left, list);
+		list.add(root.value);
+		inorder(root.right, list);
+
+	}
+
+//BEST TIME TO BUY N SELL STOCK ONE PASS SOLUTION
+public class Solution {
+    public int maxProfit(int prices[]) {
+        int minprice = Integer.MAX_VALUE;
+        int maxprofit = 0;
+        for (int i = 0; i < prices.length; i++) {
+            if (prices[i] < minprice)
+                minprice = prices[i];
+            else if (prices[i] - minprice > maxprofit)
+                maxprofit = prices[i] - minprice;
+        }
+        return maxprofit;
+    }
+}
+class Solution {
+    public int maxProfit(int[] prices) {
+        int maxprofit = 0;
+        for (int i = 1; i < prices.length; i++) {
+            if (prices[i] > prices[i - 1])
+                maxprofit += prices[i] - prices[i - 1];
+        }
+        return maxprofit;
+    }
+}
+class Solution {
+  public int maxProfit(int[] prices) {
+    int t1Cost = Integer.MAX_VALUE, 
+        t2Cost = Integer.MAX_VALUE;
+    int t1Profit = 0,
+        t2Profit = 0;
+
+    for (int price : prices) {
+        // the maximum profit if only one transaction is allowed
+        t1Cost = Math.min(t1Cost, price);
+        t1Profit = Math.max(t1Profit, price - t1Cost);
+        // reinvest the gained profit in the second transaction
+        t2Cost = Math.min(t2Cost, price - t1Profit);
+        t2Profit = Math.max(t2Profit, price - t2Cost);
+    }
+
+    return t2Profit;
+  }
+}
+
+https://leetcode.com/problems/generate-parentheses/solution/
+
+when you have been asked to skip 1 step or adjacent stuffs cannot be grouped, 
+you can use odd even strategy by %2
+
+
+RECUSION TIPS:
+1. Try to represent the problem in terms of indexes.
+2. Do all possible ways on that index according to the problem statement
+3. if question says "count all ways", sum up all stuffs.. if it says "minimum", find min of all stuffs. if max then max of stuffs.
+
+
+if recursive calls before conditional check, then its bottom up. 
+If recursive call after conditional check, its top down

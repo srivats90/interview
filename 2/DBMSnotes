@@ -1,0 +1,190 @@
+Primary Key - Natural key(aadhar which makes sense) , Surrogate key (generated seq number).
+
+CREATE DATABASE krishnakumar
+
+use popsql to get GUI to connect to db.
+
+CREATE TABLE student (
+	student_id INT PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(24) NOT NULL,
+	major VARCHAR(16) UNIQUE		UNIQUE or DEFAULT 'undecided'
+);
+DESC student;
+DROP student;
+
+ALTER TABLE student ADD gpa DECIMAL(3,2);		//8.48
+ALTER TABLE student DROP COLUMN gpa;
+
+INSERT INTO student VALUES(1, 'Jack', 'Biology');
+INSERT INTO student VALUES(2, 'Kate', 'Maths');
+INSERT INTO student(student_id, name) VALUES(3, 'Goms');  // NULL in the major 
+INSERT INTO student(name,major) VALUES( 'Jack', 'Biology');
+
+SELECT * FROM student;
+
+UPDATE student SET major = 'bio' where major = 'Biology';
+UPDATE student SET major = 'Cs';
+
+DELETE FROM student;
+DELETE FROM student WHERE major = 'Cs';
+
+SELECT * FROM student ORDER BY major, student_id DESC;
+SELECT * FROM student ORDER BY student_id DESC LIMIT 2;
+SELECT * FROM student WHERE major IN ('bio','cs') AND student_id >= 2;
+
+CREATE TABLE branch (
+	branch_id INT PRIMARY KEY,
+	.
+	mgr_id INT,
+	start_date DATE,
+	FOREIGN KEY(mgr_id) REFERENCES employee(emp_id) ON DELETE SET NULL
+	
+);
+
+ALTER TABLE employee 
+ADD FOREIGN KEY(branch_id)
+REFERENCES branch(branch_id)
+ON DELETE SET NULL;
+
+ALTER TABLE employee
+ADD FOREIGN KEY(super_id)
+REFERENCES employee(emp_id)
+ON DELETE SET NULL;
+
+CREATE TABLE works_with (
+	emp_id INT,
+	client_id INT,
+	total_sales INT,
+	PRIMARY KEY(emp_id, client_id),
+	FOREIGN KEY(emp_id) REFERENCES employee(emp_id) ON DELETE SET NULL,
+	FOREIGN KEY(client_id) REFERENCES client(client_id) ON DELETE SET NULL
+);
+
+ON DELETE SET NULL	-> this can be done if that foreign key row just acts as ref.. not significant impact.
+ON DELETE CASCADE -> if we delete a key in a row n another table has a foreign key pointing here. 
+that row also will get deleted. Do this when the foreign key also acts as primary key 
+or part of the composite primary key where the data is crucial. because primary key cannot have null.
+
+SELECT last_name AS surname FROM employee;
+SELECT DISTINCT sex FROM employee;
+SELECT COUNT(emp_id) FROM employee WHERE birth_date > '1970-00-00';
+
+SELECT COUNT(sex), sex FROM employee GROUP BY sex; // aggregation
+SELECT SUM(total_sales), emp_id FROM work_with GROUP BY emp_id;
+
+WILDCARDS:
+% -> any number of characters
+_ -> 1 character.
+
+SELECT first_name FROM employee UNION SELECT client_name FROM client; // no. of column n data type shud match in union
+
+JOIN can be done between tables based on related columns
+
+SELECT employee.first_name, branch.brach_name FROM employee JOIN branch
+ON employee.emp_id = branch.mgd_id; // 
+
+SELECT employee.first_name, branch.brach_name FROM employee LEFT JOIN branch
+ON employee.emp_id = branch.mgd_id; 
+
+SELECT employee.first_name, branch.brach_name FROM employee RIGHT JOIN branch
+ON employee.emp_id = branch.mgd_id;
+
+SELECT first_name FROM employee WHERE emp_id IN (SELECT emp_id FROM works_with where total_sales > 30000);
+	// instead of IN , if concrete value of 1 then = also can be used.
+
+TRIGGERS:	-> cant work in pop sql. login to msql or sqlplus itself
+
+CREATE TABLE trigger_message (
+	message VARCHAR(50)
+);
+
+DELIMITER $$
+CREATE TRIGGER my_trigger BEFORE INSERT ON employee
+	FOR EACH ROW BEGIN 
+	INSERT	INTO trigger_message VALUES('added new employee');
+	END$$
+DELIMITER ;	
+
+DELIMITER -> why? .because already we ve used ; in the trigger. so we shud use one more to indicate
+where the trigger ends which is $$ else mysql might stop at ; itself
+
+DELIMITER $$
+CREATE TRIGGER my_trigger1 BEFORE INSERT ON employee
+	FOR EACH ROW BEGIN 
+	INSERT	INTO trigger_message VALUES(NEW.first_name);   -> it stores the first_name that we going to newly insert in emp in the trigger_message table
+	END$$
+DELIMITER ;	
+
+DELIMITER $$
+CREATE TRIGGER my_trigger1 BEFORE INSERT ON employee
+	FOR EACH ROW BEGIN 
+		IF NEW.sex = 'M' THEN
+			INSERT	INTO trigger_message VALUES('male inserted');  
+		ELSEIF NEW.sex = 'F' THEN
+			INSERT	INTO trigger_message VALUES('female inserted');  
+		ELSE
+			INSERT	INTO trigger_message VALUES('others inserted');  
+		END IF;
+	END$$
+DELIMITER ;	
+
+
+
+NORMALIZATION:
+process of reducing the redundancy of data.
+avoid duplicates.
+
+	Data Anomalies:
+		if some employee leaves and changes are not updated in db.. then its update anomalies.
+		same on insert and delete.
+	
+	1NF : Remove repeating groups from the tables.
+		  A cell should have 1 value only.
+		  Create separate table for each set of related data.
+		  Example : an employee table where in his phone number column has 2 phone numbers.
+		  it violates 1NF.. so separate them out in each rows.
+		  
+	2NF : it has to satisfy 1NF.
+		  table should not contain partial dependency.
+		  example: EMP ID		DEPT ID		OFFICE LOCATION.. // emp n deptid makes comp pri key.
+		  But if you see office location is a normal column but depends purely on DEPT ID only.
+		  hence this table violates 2NF.
+		  hence split to 2 tables.. EMP ID    DEPT ID
+		  				then		DEPT ID		OFFICE LOCATION
+		  				
+	3NF : it has to satisfy 2NF.
+			no transitive dependency for non-prime attributes.
+			STDID	STD NAME	SUBJECTID	SUBJECT		ADDRESS
+			here subject id is dependy on studentid.. subject depends on subjectid
+			hence it violates 3NF.
+			split like
+			STDID	STD NAME	SUBJECTID	ADDRESS					
+			then 	SUBJECTID		SUBJECT
+	
+	BCNF or 3.5NF : it has to satisfy 3NF.. 
+			Every functional dependency A->B, then A has to be the superkey of that particular table.
+			STUDENT ID 		SUBJECT		PROFESSOR
+			studentid n subject makes primary key.. subject column is prime attribute.
+			prof is non prime attr n it depends on subject which is prime.. this violates BCNF.
+			split to n add PROF ID:
+			STUDENT ID		PROF ID
+			PROF ID		SUBJECT		PROFESSOR
+			
+INDEXES:
+primary key, unique, cmposite key columns are bydefault indexed.
+Foreign we use mostly in select so its good to index them.
+
+CREATE INDEX IX_AnimalSpecies ON Animal(SpeciesID);
+DROP INDEX IX_AnimalSpecies ON Animal;
+
+PREDEFINED EXCEPTIONS:
+1. too many rows
+2. no data found
+
+Function:
+it returns a value
+
+Procedure:
+it does not return a value but can return to stop execution.
+
+SELECT sysdate FROM DUAL;

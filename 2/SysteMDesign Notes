@@ -1,0 +1,946 @@
+
+TIPS FOR SYS DESIGN INTERVIEWS:
+1. Do not get into to much details upfront.
+2. Dont use prefined template design and try to fit in the requirements.
+3. Dont make up something which u cannot justify.
+4. Stay with the problem. Explain the core of the system first in detail than the load balancer etc.
+
+CASCADING FAILURES : Due to overload - messages coming beyond capacity.
+
+	How to avoid?
+	1. Messaging protocol such as gRPC (which is on top of HTTP2.0 avoids head of line blocking - which TCP does )
+	2. Loss-less compression (Huffman Coding, zip)
+	3. Maintain active connections which avoids time consumption of creating sockets, closing sockets etc. 
+		HAve active connections for like 1 hr.
+	4. Use a hybrid model where clients will pull requests than server pushing it to 1 million followers for example in insta.
+		Sometimes when the followers are less, you can do push.. hence its called as hybrid.
+	5. Graceful degradation. (like newyear eve, ppl are ok to just get/ send messags rather than seeing read receipts and sent receipts)
+		So avoid those heavy process during high load.
+	
+	6. Use TIMER WHEEL where it has 6 slots for example.. each slot will have queue or linked list of certain capacity.
+		use %6 on time to identify the slot. It will prevent max number of messages per second based on per slot queue size.
+	7. Batch processing - when popular person posts something, send it to the users as batches
+		
+How to find a service is overloaded?  
+Below indicators will tell that something is wrong
+	1. Average response time
+	2. Age of messages in queue
+	3. Dead letter queue 
+	( like kafka where you once u cannot processes a message, put into a queue 
+	or kafka where the subscribers will check if its relevant to me and take decisions)
+	
+
+Request collapsing: GLOBAL CACHEs:
+Like when more clients are requesting for same item from the database and lets say that there is a cache miss,
+store that request like <request_id, Future> . Like when the request is completed, the future object will be available.
+Clients will be blocked till the future is available.. They will be waiting on the map.
+This is trying to solve thundering herd problem.
+
+The above assumptions is that we are using a global cache for example its REDIS
+
+Designing client to handle the overload of server:
+1. when the server sends a error response, check if its permanent error (like auth failure) or temp error.
+2. client can do an EXPONENTIAL BACKOFF where it can wait for a sec and retry. Server can still send congestion onset.
+
+
+Assume there are communication between services
+And there are bad actors in the system. one bad actor can choke the queue and hence other actors messages may not reach.
+Maintain separate queues by hashing the request on the actor id so only that actor's queue will be congested.
+
+
+GATEWAY: 
+1. Responsibility of routing external requests to right places
+//2. Seeing the endpoint name for example www.gmail.com/ -> means it will hit the gateway throught DNS looks up. 
+//	Once gateway is hit.. www.gmail.com/auth -> the gateway will maintain a table like if its auth -> route to AuthService etc.
+Gateway will contact service manager to get the service name.
+Gateway need not always ask the service manager because it will not change very often. hence it can cache services details.
+The cache on the gateway can be periodically updated by service manager when it sees any change (like service going down , or new service comes up etc).
+3. Blacklists IPs to prevent DOS  
+4. Translates requests. Convert messages to internal proprietory protocols.
+
+SERVICE MANAGER:
+2. Seeing the endpoint name for example www.gmail.com/ -> means it will hit the gateway through DNS looks up. 
+	Once gateway is hit.. www.gmail.com/auth -> the gateway will maintain a table like if its auth -> route to AuthService etc.
+When services will come up they will register with service manager
+3. service manager can periodically poll the registers services if they are alive.
+
+
+Types of DOS attacks :
+1. buffer overflow attacks.. targets ip ports.. 	TCP State Exhaustion attack
+2. ICMP floods .. pings
+3. SYN flood.. send connect request to sever but never completes handshakes. 
+A DDoS attack occurs when multiple systems orchestrate a synchronized DoS attack to a single target.
+
+Workarounds for DDOS:
+rate limit your router to prevent your Web server from being overwhelmed
+add filters to tell your router to drop packets from obvious sources of attack
+timeout half-open connections more aggressively
+drop spoofed or malformed packages
+set lower SYN, ICMP, and UDP flood drop thresholds
+
+2 factor auth:
+OUATH SERVICE:
+Lets assume the client sends /oauth and oauth service gets the requests from the gateway with username n password details.
+the oauth service has a database with below columns:
+	user_id(p-key)		Password		Phone_number	verified(true/false)
+Another table
+	user_id		2factorauthcode		timestamp	SECRET
+So authservice will now send message to SMS service which will send SMS to the server with the 2factorcode.
+
+once sms service approves, auth service will send successful login response along with the SECRET to the client.
+
+SECRET can be sent via cookies.
+Computer cookies are small files, often including unique identifiers that web servers send to browsers. 
+These cookies then can be sent back to the server each time your browser requests a new page. 
+It's a way for a website to remember you, your preferences, and your habits online.
+
+SECRET can be send via bearer token.
+When user logs out the secret will become null in the database
+
+so when client requests with the token to the gateway, gateway will ask authservice if the token is valid. 
+if not then respond accordingly.
+But this result in too much messages between gateway and authservice.
+hence just like service manager that maintains a cache on the gateway, authservice will also maintain a cache on the gateway.
+
+However this itself is an AntiPattern:
+1. Like cache duplication can happen where multiple gateways have same cache maintained by the corresponding services.
+2. more RAM needed on the gateways
+3. event handling of those cache updates.
+
+Hence we can move the local cache to a new service called Global Cache.
+So all services will update the global cache.. its like a map.. 
+
+we thought of local cache earlier because lot of API requests can be avoided.
+now this one cache is there which needs API requests. its a trade-off. based on the design take a decision.
+
+PROFILE SERVICE:
+1. registers with service manager
+2. handles responsibility of creating profiles, updating profiles etc.
+The images in profile are actually URLs. 
+This is because when u upload a image, it stores in some image services and the URL is returned to the browser.
+
+API CONTRACTS:
+profile managers creates API contracts with the gateway so as how my API object should look like.
+so when gateway gets HTTP POST request, it does JSON to Object mapping based on the contract and then forwards it to the 
+profile service.
+contracts can be updated. Dont give too much filter type of contracts because its profile service's responsibility.
+contracts updation can be like date of birth can be of this format etc.
+
+if 2 services are talking between them, then those contracts must be there on each side to whom they talk.
+however, when a system goes down and comes up, it may not have the contracts.
+Hence rather than sharing contracts between services, update the contracts with the service registry.
+so when new services comes up, while it registers with the service manager, it can receive these contracts as well.
+
+when change in contract happens, the service will update the service registry.
+service registry can push contracts but the other services dynamically cannot change the object mapping.
+Instead when the restart or during maintenance window this can happen.
+
+However, now service registry has this burden aswell. 
+Hence we can offload this resp to a new service called Contract Registry.
+Now services will register the contracts with contract registry.
+Dont make major contract changes. Make it backward compatible so that parser logics wont get impacted.
+
+There are chances that the services can run on different languages so in that case we can use a framework called THRIFT.
+
+You can use versioning of contracts for backward compatibility.
+
+EMAIL STORE SERVICE:
+/sendemail endpoint, gateway will forward to email service.
+Database schema here will be like
+	ID		TO		FROM		SUBJECT		TimeStamp
+
+	ID		CONTENT(JSON format)
+
+Virus checkers services will validate content for illegal attachments.
+Spam detector service will reads contents and also subjects. (Can be cron job
+ or email service upon getting emails once stored in the database can send email events to the message queues 
+ and spam detector will read those events from the Qs and mark emails as SPAM.
+ 
+ Message Queues will also be subscribed by Preferences services where this will filter to separate folders.
+ 
+ Search Engine services will also be subscribed to messages queues which will be used for searching efficiently.
+ Elastic Search is good on reading texts.
+ These are all Eventually Consistent. 
+ 
+ CONTACTS SERVICE:
+ When we send email to a contact, then its added as ur contact by the contact service.
+ this also subscribed to the message queue.
+ 
+ May be separate message queue can be used by search engine and contact service since they operate on proper data.
+ 
+ EXTERNAL EMAILs:
+ Email service will send emails to GMAIL SMTP server which will send it to yahoo, etc.
+ 
+ Now when external emails like yahoo sends email to you, it comes to IMAP SERVER which will forward to EMAIL service.
+ 
+ Google is using Spanner ( Google's globally distributed relational database management system (RDBMS), the successor to BigTable
+ 
+ 
+ One critical difference that you guys forgot is RabbitMQ is push based messaging system whereas 
+ Kafka is pull based messaging system. This is important in the scenario where messaging system has to satisfy 
+ disparate types of consumers with different processing capabilities. 
+ With Pull based system the consumer can consume based on their capability where push systems 
+ will push the messages irrespective of the state of consumer thereby putting consumer at high risk.
+
+While RabbitMQ (like IBM MQ or JMS or other messaging solutions in general) is used for traditional messaging, 
+Apache Kafka is used as streaming platform (messaging + distributed storage + processing of data). 
+Both are built for different use cases.
+
+You can use Kafka for "traditional messaging", but not use MQ for Kafka-specific scenarios.
+
+The decision of whether to go for RabbitMQ or Kafka is dependent to the requirements of your project. 
+In general, if you want a simple/traditional pub-sub message broker then go for RabbitMQ. 
+If you want to build an event-driven architecture on top of which your organisation will be acting on events at real-time, 
+then go for Apache Kafka as it provides more functionality for this architectural type 
+ 
+Kafka which is a log, RabbitMQ is a queue and messages are removed once consumed and acknowledgment arrived.
+
+Kafka is not a queue at all, it's a log .
+
+The short answer is "message acknowledgements". RabbitMQ can be configured to require message acknowledgements. 
+If a receiver fails the message goes back on the queue and another receiver can try again. 
+While you can accomplish this in Kafka with your own code, it works with RabbitMQ out of the box.
+
+In my experience, if you have an application that has requirements to query a stream of information, 
+Kafka and KSql are your best bet. If you want a queueing system you are better off with RabbitMQ.
+
+Infrastructure cost for Kafka is higher than that for Rabbit MQ.
+
+With RabbitMQ, by default once the message has been consumed, it's deleted. 
+With Kafka, by default, messages are kept for a week. 
+It's common to set this to a much longer time, or even to never delete them.
+
+https://www.cloudamqp.com/blog/when-to-use-rabbitmq-or-apache-kafka.html
+
+HASHING:
+A hash function is a mathematical function that converts an input value into a compressed numerical value – a hash or hash value. 
+Basically, it's a processing unit that takes in data of arbitrary length and gives you the output of a fixed length – the hash value.
+
+CONSISTENT HASHING:
+Notes to self:
+* The previous video gives the impression that there is a mapping from ranges of integers to server ids,
+ and that consistent hashing is about to mapping request ids to integers in ranges 
+ resulting in more consistent routing of requests to same servers.
+    -> I did realize that this would not work very well over time, 
+    as you would end up completely changing the ranges for higher-index servers with the addition of multiple servers.
+* In this video, requests ids map to an index in a ring with `M` indices. 
+The "trick" then, is the map the server indices to indices in the ring using the same hash function 
+that also hashes request ids. Now, to assign a server to a request, one simply looks clockwise for the nearest server.
+* To make it less likely that load will be unbalanced due to (what I would call) unlucky hashing, another idea is used: 
+simply have multiple hash functions for the servers, such as to map them to multiple locations in the index ring! (clever).
+* @Andrei Marculescu points out that better than using multiple hash functions for server ids, 
+it is easier to maintain multiple aliases for each server id ("...xxx gives K replicas xxx + '1', xxx + '2', ..., xxx + 'K'.") 
+and thus map servers to multiple locations in the index ring.
+
+Choose a Prime number M and Hash the serverIds with a standard hash function and % the result with M to choose a spot in the M ring.
+M ring starts from 0 to M-1. 
+Now hash the requestID and % with M n choose spot in the M ring. Inclockwise direction, the requestsID will be served by the next server.
+There are chances that a server can be skwed(meaning overloaded). Hence instead of choosing one spot for the server in the ring,
+use 3 hashfunctions on the serverids and get 3 values. %M on the 3 values and find 3 spots for the same server on the ring.
+Thereby you can balance the call load effectively. h1(serverId)%M , h2(serverid)%M, h3(serverid)%M.
+Each server can have master slave architecture or adding replication factor
+
+MESSAGE QUEUE:
+1. Assigns tasks in balanced manner to servers.
+2. persist tasks n redistribute if one of the servers serving tasks is down.
+3. has heartbeat mechanizm to detect the state of servers.
+4. All services can write its logs/metrics to the message queue where for a requestid/productid/userid, 
+you will be able to get the details together.
+
+
+In the system design interview we will be asked to justify the use of microservice n why not mono.
+1. avoid single point of failure.
+2. try to separate services and based on load on each service, that alone can be scaled horizontally.
+3. if service communicates to other service only, all the time, then it can be combined to a monolith making communication as a function calls.
+4. skilled architect is needed. 
+5. software upgrades will need to restart only those services but mono has to restart fully n hence ve to be monitored carefully.
+6. if small team then mono is fine. if large team then contracts can be agreed and services can be assigned n maintained separately.
+
+HORIZONTAL PARTIONING:
+1. Like assume u ve a userid as the key, range from 0-25 assigned to 1 database server. 26-50 another n etc. this is horizontal partitioning.
+
+SHARDING: done in RDBMS
+Sharding is like based on a unique key, the ranges are assigned to separate servers to handle there by quering etc will be fast.
+problems:
+1. Joins across Shards. The query will need to retrieve data from both shards across network and join them.
+2. if u split like the ranges, then addin new server or removing server will have issues on splitting.
+	Hence go with consistent hashing here to decide on which range , the database will be responsible for.
+	or u can split the shards to even smaller sizes and a shard manager will map requests to mini shards.
+	this is called Hierarchical sharding.
+Smart things to do:
+1. do index within the shard.. dont do index on the key.. u can do index on secondary important field.
+
+What happens if Shard fails?
+You can have master slave architecture for each shard.
+
+* Sharding is basically a hiearchical way to index databases.
+* One problem is that you have to split the database somehow. What do you split on?
+* You only shard shards when the shard grow too big.
+* When shard fails you use the master/slave architecture. 
+Writes always go to master, reads are distributed across the slaves. 
+When the master fails one of the slaves become master.
+
+Amazon S3 -> used for storing static content like videos images .. Netflix uses this.
+s3 is considered to be cheap.. when someone uploads, it provides a link through which it can be accessed.
+
+
+Cache:
+They are like keys and values.
+Mainly used to avoid DB call, network call and speed of responses.
+Problems:
+	Caches HWs are expensive which uses SSDs.
+	Small caches then results in cache miss. ( thrashing ).
+	if we have poor eviction policy which always results in i dont ve data, it actually adds extra lookup burden.
+	consistency ?? if has old data. 
+Cache policy:
+	1. when to load data 
+	2. when to evict data.
+famous cache policy is LRU cache.
+
+Benefits of having caches closer to the server is
+1. its faster
+Problems here??
+1. caches between servers are out of sync.
+2. server restarts n cache lost.
+3. amount memory used up in RAM.
+4. number of server result it cache duplication.
+Hence?
+Global Cache (Redis)
+1. servers will hit the global cache. if missed then hit the database.
+2. global cache is also distributed n scaled.. slightly slower than inmemory server cache. but its accurate.
+
+How to make cache consistent?
+1. Write through 
+	first update cache n then update databse.
+2. Write back
+	first update database n then update cache.
+
+Hybird model: write after ?
+	1. update cache first.. but then eventually update databse. 
+	
+API DESIGN:
+	1. proper naming functions that should match with what it returns.. getAdmins means it should return list of admins only.
+	2. Only relavant parameters in to be sent in the request.
+	3. proper response.
+	4. proper error handling.
+	5. Avoid sideeffects -> just with 1 API , do a lot of stuff.
+	6. if requestin for major data.
+		1. offer responsibility to client by pagination.
+		2. fragmentation & reassmbly. 
+
+CAPACITY PLANNING:
+assume : assume read time to be 10ms , write time to be 20ms, process time 50ms.
+assume : each video upload on average is 10 mins. 
+		average movie size is 2GB per 2 hours lets assume.. so based on this calc 10mins MB size
+
+CDN :
+CDN is a global cache which delivers static contents like HTML pages.
+Region specific global cache can be maintained.
+CDN is also distributed.
+
+Databases are single source of truth.. Caches are not source of truth.
+
+CDN :
+1. hosting boxes clsoe to users.
+2. follow regulations.
+3. allow posting content in the boxes via UI.
+
+Amazon S3 is used.
+
+EVENT DRIVEN : EVENT SOURCING
+1. React, Node js ,GIT uses event driven arch.
+2. services communicate through EVENT BUS
+3. each services usually stores events upon receiving events from other services in its own local database.
+4. consistency is not good here if events are lost.
+5. event logs are there so you can rollback and understand whats happening. 
+6. you can do data analytics on the events.
+7. events are published though pub sub Qs.
+
+
+SQL VS NO SQL:
+
+SQL :
+ID NAME ADDRESS AGE ROLE	 <--join-->					ADDRESS CITY COUNTRY DISTRICT
+
+NO SQL:
+ID			VALUE
+123			{ "name":"John", "address":{"city : chennai, country:india ...}, "age":30, "role":specialist. }
+
+Adv of NOSQL over sql:
+1. when insert happens these days, u actually insert the record with full details in 1 shot. So its easy in nosql.
+2. also ppl rarely uses SELECT <COL_NAM>.. rather they use SELECT *.. hence the whole json data can be easily replied to the query in nosql.
+	rdbms might uses joins based on table structure here and it can be costly read.
+3. Scheme is flexible.. if something is null, it wont be even present in nosql JSON document.
+4. when a new column is added then it needs to lock table n can affect the consistency also. in nosql, no problem at all.. because no schema.
+5. in-build horizontal partioning (sharding) where availability is preferred over consistency.
+6. nosql mainly used for metrics, analytics, aggregations.
+
+DISADV:
+1. not useful when lot of updates happens.
+2. not ACID complaint.. however, nosql can have configuration to make it consistent. locked until replicas are updated.
+3. Transactions based like financial, money relavent systems doesnt use this.
+4. They are not read optimized. Like filter based on age > 40.  however, can be indexed.
+5. There are no relations maintained across table.
+6. Joins are hard.
+
+
+When to use nosql:
+1. when ur data is a block.
+2. not much updates to the block.
+3. write optimized.
+
+Youtube, stackoverflow still use RDBMS only
+
+
+
+Split brain problem..
+
+NO SQL :
+Key value stores -> Fast and its like MAP.. -> Redis 
+Document based -> When schema is dynamic.. no fixed schema.. Supports heavy reads and writes.
+			 	-> Documents are like rows.. Collections are like tables.
+			 	-> Highly scalable.. Sharding.. 
+Column DBs -> fix schema is there..
+
+Databases : 
+Internally used B+ Tree..  Insertion and search are O(log(n))
+
+How to scale up database perf:
+1. condense data queries to single query.
+2. Linked-list can be used for writing since its O(1) . Logs are linked-list based.
+	Disadv : Reads are slow but writes are fast. reads takes O(N).
+	Choose a hydrid model where u maintain  sorted chunks and merge sort them eventually. and hence read from here which is O(logN).
+	
+	BLOOM FILTER: it can be created for each sorted chunk so while reading can check the filter to know whether this chunk will contain the data im looking for.
+	Compaction is the process of merging these sorted chunks.
+
+
+in case of eventual consistency, you have the concept of quorum where you can set number of nodes first data need to be copied 
+before replying
+
+2 Phase commit :
+Master gets update.. it sends it to all slaves and also to MQs.. but assume some ve not ack.. 
+then transaction is considered failure and master sends a rollback. 
+if all works fine, then leader commits and send commit message to clients.
+Slaves should not rollback themselves.. Leader will send a rollback msg.
+
+Idempotent:
+An operation that produces the same results no matter how many times it is performed. 
+For example, a database query that does not change any data in the database is idempotent. 
+Functions can be designed as idempotent if all that is desired is to ensure a certain operation has been completed.
+
+
+Handle load:
+1. prescale
+2. autoscale
+
+
+COMPUTING:
+1. MEMORY
+2. I/O
+3. DISK
+4. PROCESSOR
+
+
+WHENEVER U UPLOAD SOMETHING KINDA TYPE : 
+do async stuff like receive the upload and add it in a message queue.
+send accepted response. Pull the messages from the queue and process them parallely if possible using worker services.
+
+
+
+DESIGN: CALLING APP 
+Protocol : VoIP or PSTN
+
+Requirements:
+1. user A should be able to call B using either VOIP or PSTN.
+2. Call routing 
+3. Charge the users.
+4. Provider choosing. ( based on quality and cost )
+
+SIP can be used as the communication protocol.
+
+
+DESIGN: INSTAGRAM:
+
+Photos/Videos : S3 , hdfs.
+Metadata : of photos n videos -> NoSql -> where key is photo-id and value is unstructured like it can have tags, description, location etc.
+userdata : SQL databases. 
+
+S3: Shard based on UserID so that all his photos/videos are available together.
+ Let’s assume we shard based on the ‘UserID’ so that we can keep all photos of a user on the same shard. 
+ If one DB shard is 1TB, we will need four shards to store 3.7TB of data. 
+ Let’s assume, for better performance and scalability, we keep 10 shards.
+ 
+So we’ll find the shard number by UserID % 10 and then store the data there. 
+To uniquely identify any photo in our system, we can append the shard number with each PhotoID.
+ 
+ How can we generate PhotoIDs? Each DB shard can have its own auto-increment sequence for PhotoIDs, 
+and since we will append ShardID with each PhotoID, it will make it unique throughout our system.
+Downside of above: What if we cannot store all pictures of a user on one shard? 
+				Some users will have a lot of photos compared to others, thus making a non-uniform distribution of storage.
+
+SO : 
+Partitioning based on PhotoID .
+User a pair of databases(to avoid SPF) which will generate autoincrementing unique photoIDs(one generate even id) and another(odd ID).
+even if 1 fails, loadbalancer will balance it.
+auto-increment-offset = 2
+
+NEWS FEED Generation:
+
+News feed generation service:
+To gather and rank all the relevant posts for a user to generate newsfeed and store in the cache. 
+This service will also receive live updates and will add these newer feed items to any user’s timeline.
+
+Feed notification service:
+To notify the user that there are newer items available for their newsfeed.
+
+Pre-generating the News Feed: We can have dedicated servers that are continuously generating users’ News Feeds 
+and storing them in a ‘UserNewsFeed’ table.
+Offline generation for newsfeed: We can have dedicated servers that are continuously generating users’ newsfeed
+ and storing them in memory. 
+Whenever these servers need to generate the feed for a user, they will first query to see what was the last time the feed was generated for that user. 
+Then, new feed data would be generated from that time onwards. 
+We can store this data in a hash table where the “key” would be UserID and “value” can be a LinkedHashMap LinkedHashMap<FeedItemID, FeedItem>.
+
+What are the different approaches for sending News Feed contents to the users?
+1. Pull: Clients can pull the News-Feed contents from the server at a regular interval or manually whenever they need it.
+2. Push: Servers can push new data to the users as soon as it is available. 
+To efficiently manage this, users have to maintain a Long Poll request with the server for receiving the updates.
+3. Hybrid: We can adopt a hybrid approach. We can move all the users who have a high number of followers to a pull-based model 
+and only push data to those who have a few hundred (or thousand) follows.
+
+How many feed items should we store in memory for a user’s feed? Initially, we can decide to store 500 feed items per user, 
+but this number can be adjusted later based on the usage pattern.
+
+Should we generate (and keep in memory) newsfeeds for all users? There will be a lot of users that don’t log-in frequently. 
+Here are a few things we can do to handle this; 1) a more straightforward approach could be, 
+to use an LRU based cache that can remove users from memory that haven’t accessed their newsfeed for a long time 
+2) a smarter solution can figure out the login pattern of users to pre-generate their newsfeed, 
+e.g., at what time of the day a user is active and which days of the week does a user access their newsfeed? etc.
+
+Feed publishing
+The process of pushing a post to all the followers is called fanout. By analogy, the push approach is called fanout-on-write, 
+while the pull approach is called fanout-on-load.
+
+Feed Ranking
+The most straightforward way to rank posts in a newsfeed is by the creation time of the posts, likes, comments, trends, celebrity etc.
+
+DATA SHARDING:
+Since we have a huge number of new tweets every day and our read load is extremely high too, 
+we need to distribute our data onto multiple machines such that we can read/write it efficiently. 
+
+Sharding based on UserID: We can try storing all the data of a user on one server. 
+ issues: What if a user becomes hot?  -> uneven distribution.
+ 
+Sharding based on TweetID: Our hash function will map each TweetID to a random server where we will store that Tweet. 
+Issues: This approach solves the problem of hot users, but, in contrast to sharding by UserID, 
+we have to query all database partitions to find tweets of a user, 
+which can result in higher latencies.
+
+Sharding based on Tweet creation time: Storing tweets based on creation time will give us the advantage of fetching all the top tweets quickly 
+and we only have to query a very small set of servers.
+issues : The problem here is that the traffic load will not be distributed.
+
+We can reset our auto incrementing sequence every second. For fault tolerance and better performance, 
+we can have two database servers to generate auto-incrementing keys for us, 
+one generating even numbered keys and the other generating odd numbered keys.
+
+Cache#
+We can introduce a cache for database servers to cache hot tweets and users. 
+
+How can we have a more intelligent cache? If we go with 80-20 rule, 
+that is 20% of tweets generating 80% of read traffic which means that certain 
+tweets are so popular that a majority of people read them. 
+This dictates that we can try to cache 20% of daily read volume from each shard.
+
+What if we cache the latest data? Our service can benefit from this approach. 
+Let’s say if 80% of our users see tweets from the past three days only; 
+we can try to cache all the tweets from the past three days.
+
+Our cache would be like a hash table where ‘key’ would be ‘OwnerID’ and ‘value’ would be a doubly linked list 
+containing all the tweets from that user in the past three days. 
+Since we want to retrieve the most recent data first, we can always insert new tweets at the head of the linked list, 
+which means all the older tweets will be near the tail of the linked list. 
+Therefore, we can remove tweets from the tail to make space for newer tweets.
+
+YOUTUBE/NETFLIX:
+1. Message Qs while uploading -> 
+Each uploaded video will be pushed to a processing queue to be de-queued later for encoding, thumbnail generation, and storage.
+2. Encoder: To encode each uploaded video into multiple formats.
+3. Thumbnails generator: To generate a few thumbnails for each video.
+
+Youtube Metadata :
+Video metadata storage - MySql
+VideoID
+Title
+Description
+Size
+Thumbnail
+Uploader/User
+Total number of likes
+Total number of dislikes
+Total number of views
+
+Hence we can chooose mysql because of likes dislikes view which keeps incrementing.
+
+User data storage - MySql
+UserID, Name, email, address, age, registration details, etc.
+
+Video stored in HDFS or AMAZON S3.
+Thumbnails : Google Bigtable
+
+MetaData Sharding based on VideoID: 
+
+Cache to store hot videos in front of the database servers.
+Least Recently Used (LRU) can be a reasonable cache eviction policy for our system. 
+Under this policy, we discard the least recently viewed row first.
+If we go with the 80-20 rule, i.e., 20% of daily read volume for videos is generating 80% of traffic, 
+meaning that certain videos are so popular that the majority of people view them; 
+it follows that we can try caching 20% of daily read volume of videos and metadata.
+Content Delivery Network (CDN) for caching location based.
+
+ACID
+A - Atomocity -> a transaction either happened or not happened. 
+like amount debited from 1 account n credited to another.. or not debitted at all. It shud not be like debitted from 1 but not credited.
+C - Consistency 
+I - Isolation -> Two transactions do not know about each other.  read will not know abt write ..
+D - Durability -> when a write happens, it ensures its properly persisted into disk and logs are written.
+
+
+The most important factor in this case was the query type used as MongoDB could handle more complex queries faster 
+due mainly to its simpler schema at the sacrifice of data duplication meaning that 
+a NoSQL database may contain large amounts of data duplicates. 
+Although a schema directly migrated from the RDBMS could be used this would 
+eliminate the advantage of MongoDB’s underlying data representation of subdocuments which allowed the use of less queries 
+towards the database as tables were combined. Despite the performance gain which MongoDB had over MySQL in these complex queries,
+ when the benchmark modelled the MySQL query similarly to the MongoDB complex query by using nested SELECTs MySQL performed best 
+ although at higher numbers of connections the two behaved similarly. 
+ The last type of query benchmarked which was the complex query containing two JOINS and 
+ and a subquery showed the advantage MongoDB has over MySQL due to its use of subdocuments. 
+ This advantage comes at the cost of data duplication which causes an increase in the database size. 
+ If such queries are typical in an application then it is important to consider NoSQL databases as alternatives 
+ while taking in account the cost in storage and memory size resulting from the larger database size.
+ 
+ 
+ 
+GRID:
+We can use Tree database struture for GRID.This tree structure in which each node can have four children is called a QuadTree
+We can divide the whole map into smaller grids to group locations into smaller sets. 
+Each grid will store all the Places residing within a specific range of longitude and latitude.
+GridID (a four bytes number).
+We can keep our index in a hash table where ‘key’ is the grid number and ‘value’ is the list of places contained in that grid.
+
+Dynamic size grids#
+Let’s assume we don’t want to have more than 500 places in a grid so that we can have a faster searching. 
+So, whenever a grid reaches this limit, we break it down into four grids of equal size and distribute places among them. 
+
+a. Sharding based on regions: 
+What if a region becomes hot? 
+
+b. Sharding based on LocationID:
+
+Uber:
+How about if clients pull information about nearby drivers from the server? 
+Clients can send their current location, and the server will find all the nearby drivers from the QuadTree to return them to the client.
+ Upon receiving this information, the client can update their screen to reflect the current positions of the drivers. 
+ Clients can query every five seconds to limit the number of round trips to the server. 
+ This solution looks simpler compared to the push model described above.
+ 
+CHATS: FB MESS OR WSP:
+
+Storage: H Base:
+
+
+Partitioning based on UserID: 
+
+What will happen when a chat server fails? 
+an easier approach can be to have clients automatically reconnect if the connection is lost.
+
+we can store all the group chats in a separate table partitioned based on GroupChatID.
+
+
+MAPREDUCE:
+The model is a specialization of the split-apply-combine strategy for data analysis.
+
+
+We can also build a simple Machine Learning (ML) model that can try to predict the engagement on each suggestion 
+based on simple counting, personalization, or trending data, and cache these terms beforehand.
+
+
+ERICSSON'S VALUE:
+Making the unimaginable possible.
+
+FROM openjdk:8-jdk-alpine
+MAINTAINER baeldung.com
+COPY target/docker-message-server-1.0.0.jar message-server-1.0.0.jar
+ENTRYPOINT ["java","-jar","/message-server-1.0.0.jar"]
+
+
+HASH FUNCTION :
+primes are used because you have the best chance of obtaining a unique value when multiplying values by the prime number chosen 
+and adding them all up. For example given a string, multiplying each letter value with the prime number and 
+then adding those all up will give you its hash value.
+
+A better question would be, why exactly the number 31
+
+
+Thrift is a lightweight, language-independent software stack for point-to-point RPC implementation. 
+Thrift provides clean abstractions and implementations for data transport, data serialization, and application level processing. 
+The code generation system takes a simple definition language as input and generates code across programming languages 
+that uses the abstracted stack to build interoperable RPC clients and servers.
+
+
+Extensible -> delivery agent service is delivery pizza today.. tmrw it can do burger.. need not rewrite whole stuff.
+
+
+XMPP is a short form for Extensible Messaging Presence Protocol.
+X : It means eXtensible. XMPP is a open source project which can be changed or extended according to the need.
+M : XMPP is designed for sending messages in real time. It has very efficient push mechanism compared to other protocols.
+P : It determines whether you are online/offline/busy. It indicates the state.
+P : XMPP is a protocol, that is, a set of standards that allow systems to communicate with each other.
+
+
+Heartbeat/Service Discovery- Zookeeper
+Loadbalancer/gateway - Amazon elastic loadbalancer, nginx
+MQs - Rabbit or Kafka
+CDN - Akamai .. Netflix uses OpenConnect
+Global Cache - Redis
+Telemetry/logging - ELK Stack
+Video upload- Resumable Upload Protocol
+The Resumable Upload protocol is the preferred publishing protocol because you can split large videos into smaller chunks to avoid timeouts. 
+This is especially useful for large videos where you are more likely to encounter a connection error. 
+If you encounter a connection error while uploading a large video, you normally would have to reupload the entire video. 
+But by using the Resumable Upload protocol you only have to reupload the affected chunk; 
+chunks that have alread been uploaded do not need to be reuploaded.
+Video Stream -Streaming protocols like Real-Time Messaging Protocol (RTMP) 
+		The Real-time Streaming Protocol (RTSP),
+SRTP - Secure Transport Protocol can be used on VOIP.
+Videos/photos can be stored in - Hadoop distributed file system (HDFS) or Amazon S3
+Thumbnails : Bigtable is a fully managed wide-column and key-value NoSQL database.
+Bigtable can be a reasonable choice here as it combines multiple files into one block to store on the disk 
+and is very efficient in reading a small amount of data.
+
+Elastic Search - Text search engine.. 
+
+Interservices Communication Protocol - Can use HTTP or GRPC
+gRPC expresses an RPC API in an interface description language (IDL).
+gRPC's IDL provides a simpler and more direct way of defining remote procedures .
+gRPC uses HTTP/2 under the covers, but gRPC does not expose any of HTTP/2 to the API designer or API user. 
+gRPC has already made all the decisions on how to layer the RPC model on top of HTTP 
+so you don't have to—those decisions are built into the gRPC software and generated code. 
+This makes life simpler for API designers and clients.
+APIs specified in gRPC are also simple to implement on the server side. 
+Because of the frameworks, libraries, and code-generation that gRPC provides, 
+it may be simpler to create the server implementation of a gRPC method.
+
+Another characteristic of gRPC is good performance. gRPC uses a binary payload that is efficient to create and to parse, 
+and it exploits HTTP/2 for efficient management of connections.
+
+Cassandra :
+IT has a key value pair table.
+It writes them in the memory. The pointer always points to next place it has to write n hence its fast.
+Periodically they are dumped into SS table (Sorted String Table) -> keys are sorted.
+Compaction is done to merge these SS tables together to avoid duplicates.
+Once merged, the old records are marked as tomb-stone which means it dead.
+Cassandra offers a solution for problems where one of your requirements is to have a very heavy write system 
+ and you want to have a quite responsive reporting system on top of that stored data.
+It is optimized for really high throughput on writes.If your use case is read-heavy (like cache) then Cassandra might not be an ideal choice.
+
+MongoDB is fit for use cases where your system demands a schema-less document store. 
+HBase might be fit for search engines, analyzing log data, or any place where scanning huge, 
+two-dimensional join-less tables is a requirement. 
+Redis is built to provide In-Memory search for varieties of data structures like trees, queues, linked lists, etc 
+and can be a good fit for making real-time leaderboards, pub-sub kind of system. 
+ 
+Elasticsearch is a distributed search and analytics engine built on Apache Lucene.
+Elasticsearch is a document oriented database.  
+Since its release in 2010, Elasticsearch has quickly become the most popular search engine and 
+is commonly used for log analytics, full-text search, security intelligence, business analytics, and operational intelligence use cases.
+You can send data in the form of JSON documents to Elasticsearch using the API or ingestion tools.
+Elasticsearch automatically stores the original document and adds a searchable reference to the document in the cluster’s index. 
+You can then search and retrieve the document using the Elasticsearch API.
+The distributed nature of Elasticsearch enables it to 
+process large volumes of data in parallel, quickly finding the best matches for your queries.
+
+Apache Hbase is a column-oriented key-value NoSQL database that can store multiple values against one key into multiple columns(column families).
+ HBase is modeled after Google’s BigTable and runs on top of Hadoop Distributed File System (HDFS).
+ HBase groups data together to store new data in a memory buffer and, once the buffer is full, 
+ it dumps the data to the disk. This way of storage not only helps to store a lot of small data quickly
+ but also fetching rows by the key or scanning ranges of rows. 
+ HBase is also an efficient database to store variable-sized data, which is also required by our service.
+Hbase -> master node and region node.. region node reads n writes data.. master node balances traffic, maintains regions etc.
+
+
+DEDUPLICATION IN MESSAGEQ:
+the broker can detect and filter out duplicate messages
+a name for the producing application and a publishing ID are required to enable deduplication
+the producer name must be unique and re-used between the application restarts
+the publishing ID is a strictly increasing sequence, it is usually the identifier of a given message (e.g. primary key for a database record, line in a file)
+applications should query the broker for the last publishing ID they used to restart where they left off.
+
+https://blog.rabbitmq.com/posts/2021/07/rabbitmq-streams-message-deduplication/
+
+Cloud-native applications tend to choose the guarantees of availability and partition tolerance over strong consistency. 
+This is because cloud-native applications usually prefer to keep up with scalability targets 
+than to ensure database nodes are always in communication.
+While there are three elements in the CAP theorem, the trade-off is mostly between two: availability and consistency. 
+The third element, partition-tolerance, is often considered a requirement; 
+there is no way you can design a network-based distributed system that can avoid a partitioned state, even if temporarily. 
+Therefore partition-tolerance is a necessity for scalability and resiliency, especially when it comes to NoSQL databases.
+
+https://www.scylladb.com/learn/nosql/nosql-vs-sql/
+
+
+
+Handy metrics based on numbers above:
+
+Read sequentially from HDD at 30 MB/s
+Read sequentially from 1 Gbps Ethernet at 100 MB/s
+Read sequentially from SSD at 1 GB/s
+Read sequentially from main memory at 4 GB/s
+6-7 world-wide round trips per second
+2,000 round trips per second within a data center
+
+
+ZOOKEEPER:
+Distributed servers where clients can connect to any server instance.
+But a leader is elected. when a client updates config to a server. That zookeeper server forwards the write to the leader.
+the leader then updates and broadcasts the updated info to all the other severs. Eventual consistency is achieved.
+Leader election : Node with the smallest sequence number is the leader.
+
+
+SOA:
+DBs are shared. 
+ESB is used for component communications.
+its Coarse grained.
+
+MQs in FB/TWEETS:
+perform enough work in-line to make it appear to the user that the task has completed, 
+and tie up hanging ends afterwards (posting a message on Twitter or Facebook likely follow this pattern 
+by updating the tweet/message in your timeline but updating your followers’ timelines out of band; 
+it’s simple isn’t feasible to update all the followers for a Scobleizer in real-time
+
+
+read performance is important for follower service, therefore it makes sense to use a key-value cache. 
+Feeds are generated as time passes by, so HBase / Cassandra’s timestamp index is a great fit for this use case. 
+Users have relationships with other users or objects, 
+so a relational database is our choice by default in an user profile service.
+
+
+https://tianpan.co/notes/2016-02-13-crack-the-system-design-interview
+
+However, POST may cause “double-charge” problem in payment. So we use a idempotency key to identify the request.
+If the failure happens before the server, then there is a retry, and the server will see it for the first time, and process it normally.
+If the failure happens in the server, then ACID database will guarantee the transaction by the idempotency key.
+If the failure happens after the server’s reply, then client retries, 
+and the server simply replies with a cached result of the successful operation.
+
+
+UNIQUE ID GENERATION:
+A good candidate will design a solution that utilizes a cluster of id generators 
+that reserve chunks of the id space from a central coordinator (e.g. ZooKeeper)
+ and independently allocate IDs from their chunk, refreshing as necessary.
+ 
+A great candidate will ask about the lifespan of the aliases and design a system that purges aliases past their expiration.
+
+https status 303 -> redirect.
+
+LRU(Least Recently Used): check time, and evict the most recently used entries and keep the most recently used ones.
+LFU(Least Frequently Used): check frequency, and evict the most frequently used entries and keep the most frequently used ones.
+ARC(Adaptive replacement cache): it has a better performance than LRU. 
+It is achieved by keeping both the most frequently and frequently used entries, as well as a history for eviction. 
+(Keeping MRU+MFU+eviction history.
+
+Two ways to build the system:
+
+Push Model: Influx/Telegraf/Grafana
+Pull Model: Prometheus/Grafana
+
+
+Recommendation Engine:
+Correlation, between content’s characteristic and user’s interest.
+Environmental features such as geo location, time. 
+Hot trend
+Collaborative features, which helps avoid situation where recommended content get more and more concentrated.
+
+Use Apache storm to train data (clicks, impressions, faves, shares) in realtime.
+Apache Storm has many use cases: realtime analytics, online machine learning, continuous computation, 
+distributed RPC, ETL, and more. 
+Apache Storm is fast: a benchmark clocked it at over a million tuples processed per second per node. 
+
+They are implemented in the following steps:
+
+Online services record features in realtime.
+Write data into Kafka
+Ingest data from Kafka to Storm
+Populate full user profiles and prepare samples
+Update model parameters according to the latest samples
+Online modeling gains new knowledge
+
+Payment & Bookkeeping 
+Data model: double-entry bookkeeping
+
+
+A Bloom filter is a data structure used to detect whether an element is in a set in a time and space efficient way.
+False positive matches are possible, but false negatives are not – in other words,
+a query returns either “possibly in set” or “definitely not in set”. 
+It is scalable, fault-tolerant, guarantees your data will be processed, and is easy to set up and operate.
+Cassandra uses Bloom filters to determine whether an SSTable has data for a particular row.
+An HBase Bloom Filter is an efficient mechanism to test whether a StoreFile contains a specific row or row-col cell.
+A website’s anti-fraud system can use bloom filters to reject banned users effectively.
+
+
+AMAZON, FLIPKART:
+1. Search list -> should tell whether we will be able to deliver to the user default location. -> can be high available
+2. Cart/Wishlist	
+3. Checkout		-> Payment should be consistent
+4. View Orders
+
+
+Uber:
+Supply	- Cabs available 
+Demand	- user
+Map is given by Google S2 library where location are divided as cells and each has cell id.
+
+
+https://www.geeksforgeeks.org/difference-between-b-tree-and-b-tree/
+
+ZOOM video call:/skype/ any video call
+
+Each client will talk to web socket handler and share details about that meeting id etc.
+Both of them have to provide their public IP and web socket will share this info to all the clients in the meeting.
+They also need to share the BW details of each so that if the video cal is going to be HD or SD will be decided.
+Once all these are decided then there will be peer to peer communication between the 2 parties.
+If there is a symmetric NAT in one of the parties then peer to peer wont work.
+So a call server can be introduced which will do the all above and act as middle man to exchange stream packets between peers.
+
+WEB RTC is used here.
+Web socket handler -> does the signalling server work
+STUN server -> Connector shares the Public IP.
+TURN server -> Call server 
+Call server -> Turn  
+
+In group video calling, if we there is a peer to peer.. then all has to send to all which will eat more BW.
+Hence its best to use call server which will combine and send response.
+Call recording is also possible only through the call server.
+Packets will be encrypted for safety.
+Chunks of very small size are sent to get the real time feel.
+
+
+https://www.rabbitmq.com/reliability.html#heartbeats
+
+DeadLetter exchange in RMQ: 
+When messages in queues are invalid or unable to deliver due to some reason like timer expiry,
+mesasge gets added to dead letter exchange and then
+it gets added to a dead letter queue which is bound to a dead letter exchange.
+
+it has heartbeats to detect faster link failure.
+
+
+Base64 is a group of binary-to-text encoding schemes that represent binary data (more specifically, a sequence of 8-bit bytes) 
+in sequences of 24 bits that can be represented by four 6-bit Base64 digits.
+ 
+The MD5 message-digest algorithm is a cryptographically broken but still widely used hash function producing a 128-bit hash value
+
+Database locking while updating records
+PESSIMISTIC_LOCK, PESSIMISTIC_READ

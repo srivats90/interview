@@ -1,0 +1,248 @@
+the OnInit interface has a hook method named ngOnInit(). 
+If you implement this method in your component or directive class, 
+Angular calls it shortly after checking the input properties for that component or directive for the first time.
+
+@Component({
+  selector: 'app-component-overview',
+  templateUrl: './component-overview.component.html',
+  styleUrls: ['./component-overview.component.css']
+})
+
+ngOnChanges():
+	Respond when Angular sets or resets data-bound input properties. 
+The method receives a SimpleChanges object of current and previous property values.
+Note that this happens very frequently, so any operation you perform here impacts performance significantly.
+
+Called before ngOnInit() (if the component has bound inputs) and whenever one or more data-bound input properties change.
+Note that if your component has no inputs or you use it without providing any inputs, the framework will not call ngOnChanges().
+
+ngOnInit():
+Initialize the directive or component after Angular first displays the data-bound properties 
+and sets the directive or component's input properties.
+Called once, after the first ngOnChanges(). ngOnInit() is still called even when ngOnChanges() is not 
+
+ngDoCheck():
+Detect and act upon changes that Angular can't or won't detect on its own.
+Called immediately after ngOnChanges() on every change detection run, 
+and immediately after ngOnInit() on the first run.
+
+ngAfterContentInit():
+Respond after Angular projects external content into the component's view, or into the view that a directive is in.
+Called once after the first ngDoCheck().
+
+ngAfterContentChecked():
+Respond after Angular checks the content projected into the directive or component.
+Called after ngAfterContentInit() and every subsequent ngDoCheck().
+
+ngAfterViewInit():
+Respond after Angular initializes the component's views and child views, or the view that contains the directive.
+Called once after the first ngAfterContentChecked().
+
+ngAfterViewChecked():
+Respond after Angular checks the component's views and child views, or the view that contains the directive.
+Called after the ngAfterViewInit() and every subsequent ngAfterContentChecked()	
+
+ngOnDestroy():
+Cleanup just before Angular destroys the directive or component. 
+Unsubscribe Observables and detach event handlers to avoid memory leaks.
+Called immediately before Angular destroys the directive or component.
+
+ViewEncapsulation.ShadowDom, 
+Angular uses the browser's built-in Shadow DOM API to enclose the component's view inside a ShadowRoot 
+(used as the component's host element) and apply the provided styles in an isolated manner.
+
+ViewEncapsulation.Emulated, 
+Angular modifies the component's CSS selectors so that they are only applied to the component's view 
+and do not affect other elements in the application (emulating Shadow DOM behavior). 
+For more details, see Inspecting generated CSS.
+
+ViewEncapsulation.None, 
+Angular does not apply any sort of view encapsulation meaning that any styles specified for the component 
+are actually globally applied and can affect any HTML element present within the application. 
+This mode is essentially the same as including the styles into the HTML itself.
+
+@Input:
+export class HeroChildComponent {
+  @Input() hero!: Hero;
+  @Input('master') masterName = '';
+}
+//while passing:
+    <app-hero-child
+      *ngFor="let hero of heroes"
+      [hero]="hero"
+      [master]="master">
+    </app-hero-child>
+
+  
+@Output:
+The child's EventEmitter property is an output property, typically adorned with an @Output() decorator.
+export class VoterComponent {
+  @Input()  name = '';
+  @Output() voted = new EventEmitter<boolean>();
+
+    <app-voter
+      *ngFor="let voter of voters"
+      [name]="voter"
+      (voted)="onVoted($event)">
+    </app-voter>
+
+Parent interacts with child using local variable:
+
+A parent component cannot use data binding to read child properties or invoke child methods. 
+Do both by creating a template reference variable for the child element and then reference that variable within the parent template.
+@Component({
+  selector: 'app-countdown-timer',
+  template: '<p>{{message}}</p>'
+}) 
+
+Parent calls an @ViewChild()
+The local variable approach is straightforward. 
+But it is limited because the parent-child wiring must be done entirely within the parent template. 
+The parent component itself has no access to the child.
+You can't use the local variable technique if the parent component's class relies on the child component's class. 
+The parent-child relationship of the components is not established within each components respective class with the local variable technique. Because the class instances are not connected to one another, the parent class cannot access the child class properties and methods.
+When the parent component class requires that kind of access, inject the child component into the parent as a ViewChild.
+
+export class CountdownViewChildParentComponent implements AfterViewInit {
+
+  @ViewChild(CountdownTimerComponent)
+
+Parent and children communicate using a service
+A parent component and its children share a service whose interface enables bi-directional communication within the family.
+The scope of the service instance is the parent component and its children. Components outside this component subtree have no access to the service or their communications.
+  constructor(private missionService: MissionService) {
+
+Content Projection:
+Single-slot content projection: 
+With this type of content projection, a component accepts content from a single source.
+@Component({
+  selector: 'app-zippy-basic',
+  template: `
+    <h2>Single-slot content projection</h2>
+    <ng-content></ng-content>
+  `
+})
+With the <ng-content> element in place, users of this component can now project their own message into the component.
+
+Multi-slot content projection: 
+In this scenario, a component accepts content from multiple sources.
+
+Conditional content projection:
+ Components that use conditional content projection render content only when specific conditions are met.
+ If your component needs to conditionally render content, or render content multiple times, 
+ you should configure that component to accept an <ng-template> element that contains the content you want to conditionally render.
+Using an <ng-content> element in these cases is not recommended,
+ because when the consumer of a component supplies the content, that content is always initialized, 
+ even if the component does not define an <ng-content> element or if that <ng-content> element is inside of an ngIf statement.
+With an <ng-template> element, you can have your component explicitly render content based on any condition you want, 
+as many times as you want. 
+Angular will not initialize the content of an <ng-template> element until that element is explicitly rendered.
+
+Dynamic Components: // READ AGAIN from angular.io
+@Directive({
+  selector: '[adHost]',
+})
+export class AdDirective {
+  constructor(public viewContainerRef: ViewContainerRef) { }
+}
+
+PIPES:
+DatePipe: Formats a date value according to locale rules.
+UpperCasePipe: Transforms text to all upper case.
+LowerCasePipe: Transforms text to all lower case.
+CurrencyPipe: Transforms a number to a currency string, formatted according to locale rules.
+DecimalPipe: Transforms a number into a string with a decimal point, formatted according to locale rules.
+PercentPipe: Transforms a number to a percentage string, formatted according to locale rules.
+
+{{ birthday | date | uppercase}}
+
+import { Pipe, PipeTransform } from '@angular/core';
+/*
+ * Raise the value exponentially
+ * Takes an exponent argument that defaults to 1.
+ * Usage:
+ *   value | exponentialStrength:exponent
+ * Example:
+ *   {{ 2 | exponentialStrength:10 }}
+ *   formats to: 1024
+*/
+@Pipe({name: 'exponentialStrength'})
+export class ExponentialStrengthPipe implements PipeTransform {
+  transform(value: number, exponent = 1): number {
+    return Math.pow(value, exponent);
+  }
+}
+
+EVENT BINDING:
+<button type="button" (click)="delete()">Delete</button>
+@Output() deleteRequest = new EventEmitter<Item>();
+
+delete() {
+  this.deleteRequest.emit(this.item);
+  this.displayNone = this.displayNone ? '' : 'none';
+  this.lineThrough = this.lineThrough ? '' : 'line-through';
+}
+
+
+Adding two-way data binding:
+Angular's two-way binding syntax is a combination of square brackets and parentheses, [()]. 
+The [()] syntax combines the brackets of property binding, [], with the parentheses of event binding, ()
+For two-way data binding to work, the @Output() property must use the pattern, inputChange, where input is the name of the @Input() property.
+ For example, if the @Input() property is size, the @Output() property must be sizeChange.
+ 
+ 
+Angular directives:
+
+Components—directives with a template. This type of directive is the most common directive type.
+Attribute directives—directives that change the appearance or behavior of an element, component, or another directive.
+Structural directives—directives that change the DOM layout by adding and removing DOM elements.
+
+ngClass : write a method in ur class with some variables initialized using method constructor. call that in the html.
+setCurrentClasses() {
+  // CSS classes: added/removed per current state of component properties
+  this.currentClasses =  {
+    saveable: this.canSave,
+    modified: !this.isUnchanged,
+    special:  this.isSpecial
+  };
+}
+
+<div [ngClass]="currentClasses">This div is initially saveable, unchanged, and special.</div>
+
+NgStyle: Add styles n call
+setCurrentStyles() {
+  // CSS styles: set per current state of component properties
+  this.currentStyles = {
+    'font-style':  this.canSave      ? 'italic' : 'normal',
+    'font-weight': !this.isUnchanged ? 'bold'   : 'normal',
+    'font-size':   this.isSpecial    ? '24px'   : '12px'
+  };
+}
+<div [ngStyle]="currentStyles">
+  This div is initially italic, normal weight, and extra large (24px).
+</div>
+
+NgModel:
+ directive to display a data property and update that property when the user makes changes.
+ 
+ NgIf—conditionally creates or disposes of subviews from the template.
+ <div *ngIf="currentCustomer">Hello, {{currentCustomer.name}}</div>
+ 
+NgFor—repeat a node for each item in a list.
+<div *ngFor="let item of items">{{item.name}}</div>
+
+NgSwitch—a set of directives that switch among alternative views.
+<div [ngSwitch]="currentItem.feature">
+  <app-stout-item    *ngSwitchCase="'stout'"    [item]="currentItem"></app-stout-item>
+  <app-device-item   *ngSwitchCase="'slim'"     [item]="currentItem"></app-device-item>
+  <app-lost-item     *ngSwitchCase="'vintage'"  [item]="currentItem"></app-lost-item>
+  <app-best-item     *ngSwitchCase="'bright'"   [item]="currentItem"></app-best-item>
+<!-- . . . -->
+  <app-unknown-item  *ngSwitchDefault           [item]="currentItem"></app-unknown-item>
+</div>
+
+Dependency injection in Angular
+Dependencies are services or objects that a class needs to perform its function. Dependency injection, or DI, 
+is a design pattern in which a class requests dependencies from external sources rather than creating them
+The @Injectable() decorator specifies that Angular can use this class in the DI system. 
+The metadata, providedIn: 'root', means that the HeroService is visible throughout the application.

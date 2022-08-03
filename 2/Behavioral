@@ -1,0 +1,37 @@
+Conflicts with Manager:
+1. for one of the projects last year, the customer issued an RFP. They are chances that the customer might choose another vendor
+Management didnt want to lose the customer and hence was very aggressive in the deadlines and contract.
+
+2. We felt the timelines were too tight and we might not be able to deliver it n even if we deliver, not sure about its quality.
+3. Management wanted ppl to work on parallely and finish them even though lot of modules were dependent on one another.
+
+What i did is :
+1. Since the customer was our existing one, i got the logs, statistics, measurement reports etc and came up with a plan like
+which modules/call flows are most frequently used and which are not.
+
+2. with this, i devices a plan where we can go with phase wise delivery approach where we first deliver what customer is using most
+frequently and once that is delivered, customer can start using them to begin their testing.
+3. In subsequent phases we delivered the next critical items and so on. 
+4. Management first didnt agree to it but somehow convinced them to get into a call with customer to explain this.
+Customer agreed for this plan.
+5. Thought the entire contract was not able to be delivered on the time, customer was happy because we delivered what they are using.
+6. Then with little extention we met the SLA deliverables aswell.
+
+Biggest Failure:
+1. when i was 1 year experienced in diameter protocol, i was sent to US to get transition of SS7 protocol from an SME.
+2. in my stay there for 2 weeks, i just recieved KT for 2 hours only. I raised this concern to the management, but they couldnt get
+hold of him and i had to return back.
+3. Then came an customer Sev1 emergency issue where we had to go into a war room setup with global recovery leaders and various
+managers were there.
+4. Since i was the one who got the KT, i was expected to solve the problem. I was able to give a stopgap solution
+but i was not able to find the root cause of the problem. i suggested a rollback to what customer did but couldnt point out
+what mistakes they did in the configuration. The big picture was still not clear for me in the SS7 protocol.
+5. Asusual SME from US found the RCA and global recovery leaders shared their disappointments to my manager.
+My manager knew that not much KT was given but still it was a major failure from my side.
+6. Instead of waiting for KT, what i did is, i had the source code and we had lot of lab clusters. I log into the lab clusters and 
+deploy my local build with lot of debug logs binary and spoil the configuration by deleting, modifying etc.
+7. Lab cluster manager will raise ticket to Larry and i will also be cced. So when Larry login to fix the problem,
+i immediately login and do history command and various other ways to find what he has done from the debug logs that i put.
+8. I repeated this and eventually got a clear picture of the system.
+9. I documented all the steps very clearly and was able to share with the support team in India so that they themselves were able
+to solve such issues instead of depending on US person.
