@@ -1,0 +1,26 @@
+Azure Subscriptions:
+	allows to provision resources.
+	Logical subscription
+ subscription provides you with authenticated and authorized access to Azure products and services. It also allows you to provision resources. An Azure subscription is a logical unit of Azure services that links to an Azure account. Which is an identity in Azure Active Directory, also called Azure AD, or in a directory that Azure AD trusts. There are two types of subscription boundaries that you can use. Billing boundary. This subscription type determines how an Azure account is build for using Azure. You can create multiple subscriptions for different types of billing requirements. 
+ Azure generates separate billing reports and invoices for each subscription so that you can organize and manage costs.
+
+
+Access control boundary. 
+Azure applies access management policies at the subscription level. 
+You can create separate subscriptions to reflect different organizational structures. 
+An example is that within a business, you have different departments to which you apply distinct Azure subscription policies. 
+This billing model allows you to manage and control access to the resources that users provision with specific subscriptions.
+ You might want to create additional subscriptions for resource of billing management purposes. 
+ For example, you might choose to create additional subscriptions to separate environments. 
+ When managing your resources, you can choose to create subscriptions to set up separate environments for development and testing security, or to isolate data for compliance reasons. This design is particularly useful because resource access control occurs at the subscription level. 
+ 
+ 
+ Now, let's explore the second PostgreSQL deployment option, Hyperscale Citus. 
+ The Hyperscale Citus option horizontally scales queries across multiple machines by using sharding. 
+ Its query engine parallelizes incoming sequel queries across these servers for faster responses on large data sets. 
+ It serves applications that require greater scale and performance. 
+ Generally, workloads that are approaching or already exceed 100 gigabytes of data. 
+ The Hyperscale Citus deployment option supports multitenant applications, real-time operational analytics, 
+ and high-throughput transactional workloads. 
+ Applications built for PostgreSQL can run distributed queries on Hyperscale Citus with 
+ standard connection libraries and minimal changes. 
