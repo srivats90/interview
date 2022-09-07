@@ -3,6 +3,57 @@ JPA -> examplematcher
 SPRINGBOOT TIPS:
 Spring dev tools dependency works like webpack. Spring Tool Suite works automatically. IntelliJ IDea needs 2 additional steps for auto build and run.
 
+@SpringBootApplication -> @Configuration, @EnableAutoConfiguration, @ComponentScan
+@Configuration - Holds bean definitions
+
+Spring IoC Container - Creates objects, configures and assembles dependencies and manages lifecycle
+
+Advantages of spring - Loose coupling, dependency mgmt
+
+?@Component Preferable for component scanning and automatic wiring.
+
+When should you use @Bean?
+
+Sometimes automatic configuration is not an option. 
+When? Let's imagine that you want to wire components from 3rd-party libraries
+ (you don't have the source code so you can't annotate its classes with @Component), 
+so automatic configuration is not possible.
+The @Bean annotation returns an object that spring should register as bean in application context. 
+The body of the method bears the logic responsible for creating the instance.
+
+Access beans via Application Context
+
+Bean scopes:
+singleton -> Default , prototype, request, session, application, websocket
+	
+Bean lifecycle:
+Java supported @PostConstruct and @PreDestroy annotations.
+Implement BeanPostProcessor.
+Multiple different interfaces and overriding there methods.
+init() and destroy() Or @Bean(initMethod=â€initâ€,destroyMethod=â€destroyâ€)
+Spring event and listeners
+Spring Boot Runners
+
+Spring MVC
+Controller - Handles web requests
+Model - 
+View - Forward data to viewa to be rendered as HTML
+
+	     (Created by STS-web)    dispatch req ->
+---------->  Dispatcher Servlet <-----------------------> Controller
+Req(URL)		|         model+ view
+			| model
+			v
+Response(HTML)	<---- View Panel
+
+
+Spring AOP: Address crosscutting concerns like logging,metrics
+Aspect - Module that cuts multiple classes
+JoinPoint - Method execution
+Pointcut - Predicat that helps match an advice to be applied by as aspect at a join point
+Advice - action taken Types: around, before, after
+
+javax.validation
 Validate:
 @Validate
 
@@ -173,16 +224,6 @@ If we know that we favor one implementation over another by default,
 we can forego the @Qualifier annotation and add the @Primary annotation directly to a class.
 
 
-?@Component Preferable for component scanning and automatic wiring.
-
-When should you use @Bean?
-
-Sometimes automatic configuration is not an option. 
-When? Let's imagine that you want to wire components from 3rd-party libraries
- (you don't have the source code so you can't annotate its classes with @Component), 
-so automatic configuration is not possible.
-The @Bean annotation returns an object that spring should register as bean in application context. 
-The body of the method bears the logic responsible for creating the instance.
 
 ENTITY MANAGER:
 @Autowired 
@@ -230,8 +271,8 @@ https://dzone.com/articles/dependency-injection-in-spring
 First, Spring attempts to create the Foo object. 
 During this process, Spring recognizes that a Bar object is required. 
 In order to construct the Bar object, a Foo object is needed. 
-Since the Foo object is currently under construction—the original reason a Bar object was being created
-—Spring recognizes that a circular reference may have occurred.
+Since the Foo object is currently under constructionâ€”the original reason a Bar object was being created
+â€”Spring recognizes that a circular reference may have occurred.
 
 One of the simplest solutions to this problem is to use the @Lazy annotation on one of the classes and at the point of injection. 
 This instructs Spring to defer the initialization of the annotated bean and the annotated @Autowired location. 
@@ -244,12 +285,12 @@ and each ApplicationContext can have separate configurations.
  as its Engine implementation while another container
   may be configured to use the ElectricEngine as its implementation. 
   
-The “HttpMessageConverter” is a good example of the “Strategy design pattern” with different implementations 
-like “MappingJackson2HttpMessageConverter” to read and write JSON using Jackson’s ObjectMapper, 
-and “MappingJackson2XmlHttpMessageConverter” to read and write XML using Jackson XML extension’s XmlMapper,
- “StringHttpMessageConverter” to read and write Strings from the HTTP request and response, 
- “FormHttpMessageConverter” to read and write form data from the HTTP request and response, and so on. 
- You can also create your own custom implementation of the “HttpMessageConverter”.
+The â€œHttpMessageConverterâ€ is a good example of the â€œStrategy design patternâ€ with different implementations 
+like â€œMappingJackson2HttpMessageConverterâ€ to read and write JSON using Jacksonâ€™s ObjectMapper, 
+and â€œMappingJackson2XmlHttpMessageConverterâ€ to read and write XML using Jackson XML extensionâ€™s XmlMapper,
+ â€œStringHttpMessageConverterâ€ to read and write Strings from the HTTP request and response, 
+ â€œFormHttpMessageConverterâ€ to read and write form data from the HTTP request and response, and so on. 
+ You can also create your own custom implementation of the â€œHttpMessageConverterâ€.
  
  
 @Bean
@@ -305,8 +346,8 @@ public class EnableConfigurationDemoApplication {
 https://www.baeldung.com/configuration-properties-in-spring-boot
 
 Handler interceptors are used when you want to apply specific behaviour to certain requests. 
-Handler Interceptors should implement the interface “HandlerInterceptor” to provide specific behaviours 
-via “preHandle(..)”, “postHandle(..)”, and “afterCompletion(..)” methods
+Handler Interceptors should implement the interface â€œHandlerInterceptorâ€ to provide specific behaviours 
+via â€œpreHandle(..)â€, â€œpostHandle(..)â€, and â€œafterCompletion(..)â€ methods
 //....
 public class LoggingInterceptor implements HandlerInterceptor  {
     
